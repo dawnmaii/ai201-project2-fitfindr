@@ -10,50 +10,32 @@
 
 ## Tool Inventory
 
-<!-- "Returns a list" earns NOTHING. The description has to say what is IN
-     the list.
-
-     The empty case isn't optional either — it's the thing your loop branches
-     on, and if you don't decide it here you'll discover it as a crash in
-     Milestone 5. -->
-
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Searches listings data for items that match a description, with the option to set price and size ceiling.
+- **Inputs:** `description` (str), `size` (str), `max_price` (float)
+- **Returns:** A list of dictionaries that each contain the following fields: id, title, description, category, style_tags (list), size, condition, price (float), colors (list), brand (str or None), platform.
+- **When it has nothing:** Returns an empty list
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Suggest one or two outfits, given a thrifted item and the user's wardrobe
+- **Inputs:** `new_item` (dict), `wardrobe` (dict)
+- **Returns:** A string suggesting outfits
+- **When it has nothing:** Output cannot be empty, so it will return a string with general styling advice.
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Writes a short caption about the outfit chosen.
+- **Inputs:** `outfit` (str), `new_item` (dict)
+- **Returns:** A string representing a caption for an outfit.
+- **When it has nothing:** If the outfit input is empty or whitespace, return a descriptive messages stating this. It is not possible to have an empty return output.
 
 ---
 
 ## Planning Loop
 
-<!-- Your branch rule, stated as a rule — the condition AND both paths — plus
-     the file and function that holds it.
-
-     Like this:
-       "If search_listings returns an empty list, put a message in the session
-        and stop. Otherwise take the first result and go to suggest_outfit."
-        — agent.py::run_agent
-
-     The grader checks your code against what you claim here, so the file and
-     function have to be real. -->
-
-**Branch rule:**
+**Branch rule:** If `search_listings` returns an empty list, put a message in the session and stop. Otherwise take the first result and go to `suggest_outfit`.
 
 **Where it lives:** `agent.py::run_agent`
 
