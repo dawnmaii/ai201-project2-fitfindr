@@ -1,22 +1,5 @@
 # Acceptance criteria — FitFindr
 
-Five criteria that say what "working" means for this agent, written in unit 3
-**before** any results existed.
-
-An acceptance criterion names a target: a number, a count, a rate, or something
-a person could plainly observe. *"The agent handles errors"* is an opinion.
-*"When search returns nothing, the agent stops before calling the second tool,
-in 5 of 5 tries"* is a criterion.
-
-Under each one, write a sentence or two on **why that target** and not a
-stricter one. A reason that says something about your tools, your loop, or the
-data earns credit; *"80% seemed reasonable"* does not.
-
-> Missing your own targets next unit costs you nothing. Setting a target so
-> easy you can't miss it does.
-
-**Two are written for you. You write three.**
-
 ---
 
 ## 1. A matching query completes all three tools
@@ -24,10 +7,7 @@ data earns credit; *"80% seemed reasonable"* does not.
 Given a query that matches at least one listing, the agent completes all three
 tool calls and returns a fit card — in at least 4 of 5 tries.
 
-**Why this target:**
-<!-- Why 4 of 5 and not 5 of 5? Something about your search, probably —
-     "my search is a plain keyword match and some phrasings will miss" is a
-     real answer. -->
+**Why this target:** Searching based on the query alone at least requires matching by keyword. Phrasing will vary across queries for the same concept, so we can't expect perfection here.
 
 ---
 
@@ -36,67 +16,31 @@ tool calls and returns a fit card — in at least 4 of 5 tries.
 Given a query that matches no listings, the agent stops before calling
 `suggest_outfit` and returns a message naming what to change — 5 of 5 tries.
 
-**Why this target:**
-<!-- Why is 5 of 5 reasonable here when criterion 1 isn't? What's different
-     about this path? -->
+**Why this target:** A query that matches no listings should return an empty list; the agent should recognize the empty list as a sign to go to the second branch of the planning loop (returning a message recommending changes). It should never proceed and suggest an outfit based on an empty list.
 
 ---
 
-## 3. Something about state
+## 3. Session's "selected_item" property matches the item presented in "suggest_outfit"
 
-<!-- YOU WRITE THIS ONE.
+Also in 5 of 5 tries, the item present in `suggest_outfit` should match the item in `selected_item` in terms of ID.
 
-     How would you know that the item your search found is the same item the
-     next tool received? Name something countable or observable.
-
-     This is the criterion people find hardest, because state failure doesn't
-     look like state failure — it looks like a tool problem. Something that
-     compares session["selected_item"] against what actually reached
-     suggest_outfit is the shape you're after. -->
-
-
-
-**Why this target:**
-
-
+**Why this target:** Whatever goes into `selected_item` will be re-used later down the pipeline, from `suggest_outfit` to `fit_card`. The item has to be consistent; it shouldn't be made up if it doesn't exist. nor changed once selected by the user.
 
 ---
 
-## 4. Something about the fit card
+## 4. Fit card is informative about the outfit itself
 
-<!-- YOU WRITE THIS ONE.
+In 3/5 times, the fit card should mention the cost of the selected item relative to the outfit, followed by what occasion(s) said outfit would be good for. Overall, the fit card should be less than five sentences.
 
-     The fit card calls a model, so the same input can produce different words
-     each time. That's not a bug — it's the nature of the tool. So what would
-     make it acceptable?
-
-     Think about what you'd actually be unhappy to see. A caption that never
-     mentions the price? Two different items producing the same opening
-     sentence? A card longer than a caption anyone would post? Any of those can
-     be turned into a number. -->
-
-
-
-**Why this target:**
-
-
+**Why this target:** The model will generate a different output every time, so it's important to give enough room for it to make mistakes while also giving the output some structure via this criterion. Five sentences, if used wisely, should be sufficient for a holistic review of the outfit generated.
 
 ---
 
-## 5. Your choice
+## 5. Price ceiling is respected
 
-<!-- YOU WRITE THIS ONE TOO.
+If the user provides a price limit initially, every returned listing's price is less than or equal to `max_price` (5/5 tries).
 
-     Pick something you actually care about getting right. Speed, the empty
-     wardrobe path, what happens when the model can't be reached, whether the
-     search respects a price ceiling — anything, as long as it names a number
-     or an observable outcome. -->
-
-
-
-**Why this target:**
-
-
+**Why this target:** This is a hard filter in `search_listings`; there's no reason to expect anything less than 5/5.
 
 ---
 
