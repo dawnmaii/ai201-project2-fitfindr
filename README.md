@@ -13,7 +13,7 @@
 ### `search_listings`
 
 - **What it does:** Searches listings data for items that match a description, with the option to set price and size ceiling.
-- **Inputs:** `description` (str), `size` (str), `max_price` (float)
+- **Inputs:** `description` (str), `size` (str, optional — None skips size filtering; matched case-insensitively against each part of the listing's size when split on /, so a request for "M" matches a listing sized "S/M"), `max_price` (float, optional — none skips price filtering)
 - **Returns:** A list of dictionaries that each contain the following fields: id, title, description, category, style_tags (list), size, condition, price (float), colors (list), brand (str or None), platform.
 - **When it has nothing:** Returns an empty list
 
