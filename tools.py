@@ -106,7 +106,6 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
         With an empty wardrobe, return general styling advice rather than
         raising or returning "". Unit 4 has you trigger the empty wardrobe on
         purpose, so decide now what it should do.
-
     """
     # 1. Check whether wardrobe['items'] is empty.
     # 2. If it is, ask the model for general styling ideas for this item.
@@ -146,9 +145,6 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
 
         • CACHE_ENABLED — the adapter handed back an answer it already had
         • TEMPERATURE   — at 0.0 the model gives the same words every time
-        
-    Test it from a terminal before you move on:
-        python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
     """
     # 1. Guard against an empty or whitespace-only `outfit`.
     if outfit.strip():

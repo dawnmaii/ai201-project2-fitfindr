@@ -1,10 +1,8 @@
 # FitFindr
 
-<!-- ═══════════════════════ UNIT 3 — THE BUILD ═══════════════════════ -->
-
 ## What This Does
 
-<!-- Three or four sentences: what a user asks for, and what they get back. -->
+This program accepts a description of a wardrobe item along with size and a price limit as optional fields. It then searches a database of listings and selects an item that matches the description and constraint(s) given, after which it recommends an outfit with that item based on what the user already has in their wardrobe. Then, it generates a "fit card" or "caption", a short summary of the outfit generated with the chosen item.
 
 ---
 
@@ -39,70 +37,117 @@
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** Regex-based. re.search() pulls out a dollar amount (\$(\d+)) for max_price and a size token (size\s+(\S+)) for size, both optional — None if not found. The remaining text, after stripping out the matched price/size phrases with re.sub(), becomes the description.
 
-**What moves through the session:** <!-- which fields, in what order -->
+**What moves through the session:** query → parsed into session["parsed"] (description, size, max_price) → fed into search_listings, result stored in session["search_results"] → branch: if empty, session["error"] is set and the run stops here; otherwise the first result becomes session["selected_item"] → session["selected_item"] + session["wardrobe"] go into suggest_outfit, result stored in session["outfit_suggestion"] → session["outfit_suggestion"] + session["selected_item"] go into create_fit_card, result stored in session["fit_card"].
 
 ---
 
 ## Sample Run
 
-<!-- Two things go here.
+### One full query
 
-     1. One FULL query and its output, pasted as text.
-     2. Your three per-tool terminal tests — the command and what it printed. -->
+```text
+$ python agent.py
+>> 
+=== A query the data can match ===
+  found:    Mesh Long-Sleeve Top — Black — $15.0 on depop
+  outfit:   Since you just picked up the versatile **Mesh Long-Sleeve Top in Black**, you have a great base piece that can transition easily between edgy, casual, and smart-casual looks. 
 
-**One full query**
+Here are three outfit suggestions using the items from your wardrobe list:
 
+### Outfit 1: The "Model Off-Duty" Edgy Look
+*This outfit plays with transparency and layering, keeping the color palette monochromatic and cool.*
+* **Top:** Mesh Long-Sleeve Top (Black) *layered over* White ribbed tank top (tops)
+* **Bottoms:** Baggy straight-leg jeans, dark wash
+* **Shoes:** Black combat boots
+* **Accessories:** Black crossbody bag
+
+**Why it works:** Wearing the white ribbed tank underneath the sheer black mesh top creates a sharp, high-contrast layered effect. Paired with the baggy dark-wash jeans and combat boots, it gives off an effortless, streetwear-inspired vibe.
+
+---
+
+### Outfit 2: High-Low Smart Casual
+*A mix of tailored trousers and a grungy mesh top for a balanced, fashion-forward contrast.*
+* **Top:** Mesh Long-Sleeve Top (Black)
+* **Bottoms:** Wide-leg khaki trousers
+* **Outerwear:** Vintage black denim jacket
+* **Shoes:** Chunky white sneakers
+* **Accessories:** Brown leather belt
+
+**Why it works:** The structured, polished look of the wide-leg khaki trousers is instantly cooled down by the sheer black mesh top. Adding the vintage black denim jacket on top and grounding the look with chunky white sneakers ties the sporty and tailored elements together. Don't forget to thread the brown leather belt through the trousers to add a nice touch of contrast.
+
+---
+
+### Outfit 3: Cozily Textured Street Style
+*Perfect for transitional weather, this look mixes textures (mesh, fleece, and denim).*
+* **Top:** Oversized grey crewneck sweatshirt (worn *over* or *layered with* the Mesh Long-Sleeve Top so the mesh peeks out at the neck and cuffs)
+* **Bottoms:** Baggy straight-leg jeans, dark wash
+* **Outerwear:** Vintage black denim jacket (optional, for colder days)
+* **Shoes:** Chunky white sneakers
+* **Accessories:** Black crossbody bag
+
+**Why it works:** Layering the sheer mesh top underneath an oversized crewneck allows the collar and cuffs of the mesh to peek through, adding subtle texture to a basic sweatshirt-and-jeans combo. Finish it off with chunky white sneakers for a comfortable, everyday fit.
+  fit card: Channeling total model-off-duty energy in this vintage Depop find—the versatile Mesh Long-Sleeve Top in Black (grabbed for just $15!) layered over a classic white ribbed tank and baggy dark-wash jeans. 🖤✨ Grounded with black combat boots and a sleek crossbodybag, it’s the ultimate cool-girl streetwear fit for running weekend errands, grabbing iced coffee, or heading to a casual concert. Run, don't walk, to score gems like this! 🤌🏼🛍️ #DepopFinds #StreetwearStyle #ModelOffDuty #ThriftedFashion
+
+=== A query it can't ===
+  stopped: No matches for 'designer ballgown' under $5.0 in size XXS — try raising the price, widening the size, or changing the description.
+  fit_card is None — it should still be None here
+
+The second one should stop before the fit card. If both paths look the same,
+the branch isn't doing anything yet.
 ```
-$ python app.py ask '...'
 
-```
+### The three tools, tested one at a time
 
-**The three tools, tested one at a time**
-
-```
+```text
 $ python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
-
+[{'id': 'lst_006', 'title': 'Graphic Tee — 2003 Tour Bootleg Style', 'description': 'Vintage-style bootleg tee with faded graphic. Slightly boxy fit. 100% cotton, soft and worn-in.', 'category': 'tops', 'style_tags': ['graphic tee', 'vintage', 'grunge', 'streetwear', 'bandtee'], 'size': 'L', 'condition': 'good', 'price': 24.0, 'colors': ['black'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_017', 'title': 'Mesh Long-Sleeve Top — Black', 'description': 'Sheer black mesh long-sleeve. Great for layering under a graphic tee or over a bralette. Stretchy material, fits true to size.', 'category': 'tops', 'style_tags': ['y2k', 'grunge', 'goth', 'layering'], 'size': 'S/M', 'condition': 'excellent', 'price': 15.0, 'colors': ['black'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_002', 'title': 'Y2K Baby Tee —Butterfly Print', 'description': 'Super cute early 2000s baby tee with butterfly graphic. Fitted crop length. Tag says medium but fits like a small.', 'category': 'tops', 'style_tags': ['y2k', 'vintage', 'graphic tee', 'cottagecore'], 'size': 'S/M', 'condition': 'excellent', 'price': 18.0, 'colors': ['white', 'pink', 'purple'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_015', 'title': 'Vintage GraphicHoodie — Faded Black', 'description': 'Faded black pullover hoodie with barely-visible vintage graphic on the chest. Cozy interior. Somepilling but adds to the worn-in look.', 'category': 'tops', 'style_tags': ['vintage', 'grunge', 'graphic', 'streetwear'], 'size': 'L', 'condition': 'fair', 'price': 26.0, 'colors': ['black', 'charcoal'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_033', 'title': 'Vintage Band Tee — Faded Grey', 'description': 'Faded grey band-style tee with distressed graphic. Crew neck. Fits boxy. Well-loved but no holes or major damage.', 'category': 'tops', 'style_tags': ['vintage', 'grunge', 'band tee', 'graphic tee', 'streetwear'], 'size': 'L', 'condition': 'fair', 'price': 19.0, 'colors': ['grey', 'charcoal'], 'brand': None, 'platform': 'depop'}]
 ```
 
-```
-$ python -c "from tools import suggest_outfit; ..."
+```text
+$ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"  
+>> 
+Here is a casual, vintage-inspired outfit built around your new **Vintage Levi's 501 Jeans in Medium Wash**:
 
+### **The Outfit Breakdown**
+* **Top:** White ribbed tank top
+* **Outerwear:** Vintage black denim jacket (worn over the tank)
+* **Shoes:** Chunky white sneakers
+* **Accessories:** Brown leather belt & Black crossbody bag
+
+---
+
+### **Why This Works**
+This look leans into effortless, off-duty 90s style. The medium wash of the Levi's 501s pairs naturally with the crisp white ribbed tankfor a classic, high-contrast base. Throwing on the vintage black denim jacket adds a cool, broken-in texture and creates a stylish double-denim contrast (blue jeans + black jacket). 
+
+The chunky white sneakers tie in with the bright white of the tank top for a cohesive look, while the brown leather belt adds a touch ofwarmth to break up the blue and black. Finally, the black crossbody bag keeps it practical and ties into the black outerwear. 
+
+### **How to Wear It**
+Tuck the white ribbed tank slightly into the 501s to highlight the brown leather belt, let the black denim jacket hang loosely over yourshoulders or on your arms, slip on the chunky sneakers, and sling the crossbody bag across your front or side. Perfect for casual weekends, errands, or hanging out!
 ```
 
-```
-$ python -c "from tools import create_fit_card; ..."
-
+```text
+$ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"  
+>> 
+Can you ever go wrong with a classic denim and sneaker combo? 👟👖 Rocking these Vintage Levi’s 501 Jeans in a timeless medium wash (scored on Depop for just $38!) paired with crisp white sneakers for the ultimate effortless look. It’s the absolute best fit for running weekend errands, grabbing iced coffee with friends, or a casual Sunday farmers market stroll. ☕️✨ Tap the link to shop the look before it’s gone!
 ```
 
 ---
 
 ## How I Used AI
 
-<!-- Two specific moments. What you asked, what came back, what you changed.
+### Moment 1
 
-     "I used Claude to help me code" is not enough.
+- *What I asked for:* Check the output and help me debug the `search_listings` size filter.
+- *What came back:* Pointed out that `item['size'] == size` was too strict for a substring check if I wanted to consider additional qualifying sizes.
+- *What I changed:* Decided to do a split on size based on the "/" character to do a proper substring check and filter for size.
 
-     "I gave Claude my search_listings spec. It returned None on no match
-     instead of an empty list, so I changed it" is the level we want. -->
+### Moment 2
 
-**Moment 1**
-
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
-
-**Moment 2**
-
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
-
-<!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
-
-     Don't fill these in during unit 3.
-     ═══════════════════════════════════════════════════════════════════ -->
+- *What I asked for:* I asked AI to review  my `run_agent` loop for any inconsistencies in syntax or logic.
+- *What came back:* AI caught that I was referencing session['new_item'], a key that doesn't exist in the session dict, and that suggest_outfit was reading the local wardrobe parameter instead of session['wardrobe'].
+- *What I changed:* After asking for further understanding on how these bugs occurred, I implemented the recommended fixes.
 
 ---
 
@@ -118,17 +163,17 @@ $ python -c "from tools import create_fit_card; ..."
      into results/. Paste it here and fill in the verdicts. -->
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
-|---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| --------- | ------ | ----- | ----- | ----- | ----- | ----- | ------- |
+| 1.        |        |       |       |       |       |       |         |
+| 2.        |        |       |       |       |       |       |         |
+| 3.        |        |       |       |       |       |       |         |
+| 4.        |        |       |       |       |       |       |         |
+| 5.        |        |       |       |       |       |       |         |
 
 **Real output from one try**, pasted as text, naming the file and function
 that produced it:
 
-```
+```text
 
 ```
 
@@ -153,16 +198,14 @@ that produced it:
      three. -->
 
 | # | Criterion | Target | Verdict | How I decided |
-|---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+|---|-----------|--------|---------|---------------|
+| 1 |           |        |         |               |
+| 2 |           |        |         |               |
+| 3 |           |        |         |               |
+| 4 |           |        |         |               |
+| 5 |           |        |         |               |
 
-**Diagnoses**
-
-
+### Diagnoses
 
 ---
 
@@ -178,15 +221,15 @@ that produced it:
      the same length, your branch isn't working — and this is the fastest way
      anyone will ever find that out. -->
 
-**Happy path**
+### Happy path
+
+```text
 
 ```
 
-```
+### Empty search
 
-**Empty search**
-
-```
+```text
 
 ```
 
@@ -194,8 +237,6 @@ that produced it:
 behaved differently afterwards. If the rewire didn't work, say exactly where it
 broke — the error text and the last thing that worked. That earns the point in
 full. -->
-
-
 
 ---
 
@@ -213,19 +254,17 @@ full. -->
 ### Run Log — After
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
-|---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| --------- | ------ | ----- | ----- | ----- | ----- | ----- | ------- |
+| 1.        |        |       |       |       |       |       |         |
+| 2.        |        |       |       |       |       |       |         |
+| 3.        |        |       |       |       |       |       |         |
+| 4.        |        |       |       |       |       |       |         |
+| 5.        |        |       |       |       |       |       |         |
 
 **Did it help, and how do I know:**
 
 <!-- If it made things worse, say that. Honestly reported, that earns full
      credit and is more interesting than one that worked. -->
-
-
 
 ---
 
@@ -235,22 +274,7 @@ full. -->
      you did. "I ran out of time" is fine if it's true. Pretending nothing is
      left is not. -->
 
-
-
 <!-- ═════════════════════════════════════════════════════════════════════
-
-     SUBMISSION CHECKLIST — unit 3
-
-       [ ] criteria.md has five numbered criteria, each with a target
-       [ ] Each criterion has a reason underneath it
-       [ ] All five unit 3 sections above have real content
-       [ ] Tool Inventory: all three tools, inputs WITH TYPES, a specific
-           return value, and the empty case
-       [ ] Planning Loop names the branch rule and agent.py::run_agent
-       [ ] Sample Run: one full query plus the three per-tool tests, as text
-       [ ] At least four new commits
-       [ ] Repository URL submitted — WRITE IT DOWN, you submit the same one
-           next unit
 
      SUBMISSION CHECKLIST — unit 4
 
@@ -267,8 +291,6 @@ full. -->
        [ ] At least four new commits
        [ ] The SAME repository URL as last unit
 
-     Do not delete and recreate this repository. Your commit history is what
-     shows your criteria existed before your results did.
      ═════════════════════════════════════════════════════════════════════ -->
 
 ---
