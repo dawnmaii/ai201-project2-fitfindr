@@ -224,19 +224,67 @@ that produced it:
 ### Happy path
 
 ```text
+python app.py ask 'vintage graphic tee under $30' --trace     
+[1] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Graphic Tee — 2003 Tour Bootleg Style, Y2K Baby Tee — Butterfly Print, Vintage Graphic Hoodie — Faded Black … +7 more
+[2] suggest_outfit
+      in:  dict with keys: new_item, wardrobe
+      out: Here are a few ways to style your new **Graphic Tee — 2003 Tour Bootleg Style (in Black)** using the items fro…
+[3] create_fit_card
+      in:  dict with keys: outfit, new_item
+      out: Channeling major Y2K/Retro-Grunge energy with this vintage-inspired 2003 Tour Bootleg Graphic Tee in black, sc…
 
+  Found:    Graphic Tee — 2003 Tour Bootleg Style — $24.0 on depop
+
+  Outfit:   Here are a few ways to style your new **Graphic Tee — 2003 Tour Bootleg Style (in Black)** using the items from your wardrobe, depending on the vibe you are going for:
+
+### Outfit 1: The Ultimate Y2K/Retro-Grunge Look (Edgy & Casual)
+*This look leans into the "bootleg tour" aesthetic by pairing the tee with distressed denim and chunky footwear.*
+* **Top:** Graphic Tee — 2003 Tour Bootleg Style (Black)
+* **Bottoms:** Baggy straight-leg jeans (dark wash)
+* **Outerwear (Optional):** Vintage black denim jacket (worn off the shoulders or open)
+* **Shoes:** Black combat boots
+* **Accessories:** Brown leather belt, Black crossbody bag
+
+### Outfit 2: Streetwear Layered Look (Cool & Comfortable)
+*Perfect for cooler weather or an effortless street-style aesthetic. Layering the graphic tee over or under creates dimension.*
+* **Top:** Graphic Tee (Black) layered over or under the White ribbed tank top (let the white peek out at the collar/hem)
+* **Bottoms:** Baggy straight-leg jeans (dark wash)
+* **Outerwear:** Oversized grey crewneck sweatshirt (worn draped over the shoulders or pulled on if it gets cold)
+* **Shoes:** Chunky white sneakers
+* **Accessories:** Black crossbody bag
+
+### Outfit 3: High-Low Contrast (Smart-Casual / Street-Chic)
+*Mixing the casual, vintage music merch vibe with tailored trousers creates a very fashion-forward, balanced silhouette.*
+* **Top:** Graphic Tee — 2003 Tour Bootleg Style (Black) tucked in slightly
+* **Bottoms:** Wide-leg khaki trousers
+* **Outerwear:** Black cropped zip hoodie (worn unzipped over the tee)
+* **Shoes:** Chunky white sneakers (to keep it sporty) or Black combat boots (for a sharper edge)
+* **Accessories:** Brown leather belt (essential to pull the khakis together), Black crossbody bag
+
+  Fit card: Channeling major Y2K/Retro-Grunge energy with this vintage-inspired 2003 Tour Bootleg Graphic Tee in black, scored on Depop! Styled here with edgy baggy dark-wash straight-leg jeans, a classic brown leather belt, a black crossbody bag, and chunky black combat boots to complete the ultimate edgy, casual fit. Throw on a distressed black denim jacket for that effortless off-duty look. Perfect for weekend concerts, thrifting trips, or hanging out with friends when you want to look effortlessly cool. 🎸🖤✨ 
+
+#Y2Kstyle #DepopFinds #GraphicTee #RetroGrunge #Streetwear #BootlegTee
+
+1 model calls this session, 1 served from cache, 497 prompt + 140 output tokens
 ```
 
 ### Empty search
 
 ```text
+python app.py ask 'designer ballgown size XXS under $5' --trace                                                                                          
+>> 
+[1] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: [] (empty)
 
+  No matches for 'designer ballgown' under $5.0 in size XXS — try raising the price, widening the size, or changing the description.
+
+0 model calls this session
 ```
 
-**On the MCP move:** <!-- what changed in your code, and whether anything
-behaved differently afterwards. If the rewire didn't work, say exactly where it
-broke — the error text and the last thing that worked. That earns the point in
-full. -->
+**On the MCP move:** Moved search_listings behind MCP: registered it in mcp_server.py with a public description and typed inputs, then swapped the direct call in agent.py::run_agent for call_tool('search_listings', {...}). The return value remained the same, so the branch and downstream tools needed no changes either. The only real issue was self-inflicted: I initially assigned the MCP result to a new variable instead of session['search_results'], which silently broke the branch (it always looked empty) until fixed.
 
 ---
 

@@ -96,6 +96,8 @@ def run_agent(query: str, wardrobe: dict) -> dict:
 
     # 4. Call search_listings() with what you parsed. Put the results in session["search_results"].
     session["search_results"] = call_tool("search_listings", {"description": description, "size": size, "max_price": max_price})
+    trace.step("search_listings (via MCP)", inputs={"description": description, "size": size, "max_price": max_price}, returned=session["search_results"])
+
     # If nothing came back: 
     if not session["search_results"]:
     # put a message in session["error"] saying what the user could change — "No results" is not that message
@@ -110,14 +112,19 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         return session
         # do NOT call suggest_outfit with nothing
     else:
-    # 5. Choose an item — the first result is fine. Put it in session["selected_item"].
         session["selected_item"] = session["search_results"][0]
-    # 6. Call suggest_outfit() with the selected item and the wardrobe. Put the result in session["outfit_suggestion"].
-        session["outfit_suggestion"] = suggest_outfit(session["selected_item"], session["wardrobe"])
-    # 7. Call create_fit_card() with the outfit and the item. Put the result in session["fit_card"].
-        session["fit_card"] = create_fit_card(session["outfit_suggestion"], session["selected_item"])
-    # 8. Return the session.
+        try:
+            session["outfit_suggestion"] = suggest_outfit(session["selected_item"], session["wardrobe"]) # type: ignore[arg-type]
+            trace.step("suggest_outfit", inputs={"new_item": session["selected_item"], "wardrobe": session["wardrobe"]}, returned=session["outfit_suggestion"])
+
+            session["fit_card"] = create_fit_card(session["outfit_suggestion"], session["selected_item"]) # type: ignore[arg-type]
+            trace.step("create_fit_card", inputs={"outfit": session["outfit_suggestion"], "new_item": session["selected_item"]}, returned=session["fit_card"])
+
+        except ModelUnavailable as exc:
+            session["error"] =  f"The styling service is temporarily unavailable: ({exc})"
+            return session
         return session
+
 
 # ── running it directly ───────────────────────────────────────────────────────
 
