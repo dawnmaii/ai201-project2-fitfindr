@@ -10,14 +10,6 @@ can't tell which layer is lying to you.
     suggest_outfit(new_item, wardrobe)             → str
     create_fit_card(outfit, new_item)              → str
 
-All three are stubs right now. They run and they do nothing — that's the
-starting position and it's deliberate.
-
-⚠️ Before you write any of them, fill in the **Tool Inventory** section of your
-README (Milestone 2). Four lines per tool: what it does, each input with its
-type, exactly what it returns, and what it returns when it has nothing to give.
-That last line is what your loop branches on. "Returns a list" earns nothing —
-the description has to say what is *in* the list.
 """
 
 import config  # noqa: F401 — you'll use this in search_listings
@@ -35,9 +27,6 @@ def search_listings(
     """
     Search the listings data for items matching a description, and optionally a
     size and a price ceiling.
-
-    This is the tool that doesn't call the model, which makes it the easiest one
-    to test and the one to move onto MCP in unit 4.
 
     Args:
         description: keywords describing what the user wants
@@ -93,8 +82,7 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
     """
     Given a thrifted item and the user's wardrobe, suggest one or two outfits.
 
-    This one calls the model, through `generate()`. You don't need to think
-    about rate limits — the adapter handles pacing for you.
+    This one calls the model, through `generate()`.
 
     Args:
         new_item: a listing dict — the item the user is considering.
@@ -122,10 +110,6 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
 
 def create_fit_card(outfit: str, new_item: dict) -> str:
     """
-    Write a short caption someone would actually post about the find.
-
-    This calls the model too.
-
     Args:
         outfit:   the outfit suggestion string from suggest_outfit().
         new_item: the listing dict for the item.

@@ -18,6 +18,8 @@ import re
 import trace
 from tools import search_listings, suggest_outfit, create_fit_card
 from generate import ModelUnavailable
+from mcp_client import call_tool
+
 
 
 # ── session state ─────────────────────────────────────────────────────────────
@@ -93,7 +95,7 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     session["parsed"] = {"description": description, "size": size, "max_price": max_price}
 
     # 4. Call search_listings() with what you parsed. Put the results in session["search_results"].
-    session["search_results"] = search_listings(session["parsed"]["description"], session["parsed"]["size"], session["parsed"]["max_price"])
+    session["search_results"] = call_tool("search_listings", {"description": description, "size": size, "max_price": max_price})
     # If nothing came back: 
     if not session["search_results"]:
     # put a message in session["error"] saying what the user could change — "No results" is not that message

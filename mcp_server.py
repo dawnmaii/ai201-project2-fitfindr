@@ -67,25 +67,19 @@ from tools import search_listings as _search_listings_impl  # noqa: F401 — you
 mcp = FastMCP("fitfindr", log_level="WARNING")
 
 
-# ── TODO: uncomment and fill this in ──────────────────────────────────────────
-#
-# @mcp.tool()
-# def search_listings(
-#     description: str,
-#     size: str | None = None,
-#     max_price: float | None = None,
-# ) -> list[dict]:
-#     """
-#     <-- YOUR DESCRIPTION GOES HERE.
-#
-#         One or two sentences. What does this tool do, what does it need, and
-#         what does it give back when it finds nothing? Written for a reader
-#         who cannot see the code.
-#     """
-#     return _search_listings_impl(description, size, max_price)
-#
-# ──────────────────────────────────────────────────────────────────────────────
-#
+@mcp.tool() # decorator FastMCP
+def search_listings(
+    description: str,                 
+    size: str | None = None,            
+    max_price: float | None = None,     
+) -> list[dict]:
+    """
+    This tool searches listings for clothing items by description/size/price and returns matches;
+    if nothing matches, an empty list is returned instead. Description is mandatory, max price
+    and size are optional.
+    """
+    return _search_listings_impl(description, size, max_price)
+
 # Two notes on the block above.
 #
 # The registered name is the *function* name — so the block above registers
