@@ -1,11 +1,5 @@
 """
-Calling an MCP tool from your agent. ← UNIT 4
-
-This is the plumbing, and it's given to you. Connecting over stdio and turning
-the protocol's response back into a Python value is fiddly and it isn't the
-lesson. What *is* the lesson is on the other side, in `mcp_server.py`: writing
-a tool description and typed inputs that something other than your own code can
-read.
+Calling an MCP tool from your agent.
 
 Use it like this, in `run_agent()`:
 

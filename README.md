@@ -149,6 +149,18 @@ Can you ever go wrong with a classic denim and sneaker combo? 👟👖 Rocking t
 - *What came back:* AI caught that I was referencing session['new_item'], a key that doesn't exist in the session dict, and that suggest_outfit was reading the local wardrobe parameter instead of session['wardrobe'].
 - *What I changed:* After asking for further understanding on how these bugs occurred, I implemented the recommended fixes.
 
+### Moment 3
+
+- *What I asked for:* Help understanding why --trace was crashing with TypeError: unhashable type: 'dict'.
+- *What came back:* AI explained I'd written inputs={...} literally (which is Python's Ellipsis wrapped in a set) instead of a real dict, and in another call had used curly braces as a set literal containing dicts, which can't be hashed.
+- *What I changed:* Rewrote every trace.step() call to pass a proper {"key": value} dict matching each function's actual parameters.
+
+### Moment 4
+
+- *What I asked for:* Help understanding why 0 of 5 "before" tries satisfied criterion 4's "cost relative to the outfit" requirement.
+- *What came back:* AI pointed out the create_fit_card prompt never actually asked the model to frame price that way — it only asked for price, platform, and occasion — so the model had no instruction to produce a cost comparison.
+- *What I changed:* Added an explicit instruction to the prompt ("frame the price as what the whole look would cost"), which fixed it to 5/5 in the "after" run.
+
 ---
 
 ## Run Log — Before
@@ -309,9 +321,24 @@ python app.py ask 'designer ballgown size XXS under $5' --trace
 
 ## What's Still Broken
 
-<!-- For each criterion still missed: what you'd do, and why you stopped where
-     you did. "I ran out of time" is fine if it's true. Pretending nothing is
-     left is not. -->
+No criterion was missed this unit, but one real weakness surfaced repeatedly
+in the eval data that none of my five criteria happen to test for:
+
+`search_listings`'s keyword-overlap scoring can't distinguish an item *being*
+a graphic tee from an item's description merely *mentioning* one — the Mesh
+Long-Sleeve Top kept surfacing for tee queries throughout this unit's eval
+runs because its description contains the phrase "graphic tee" incidentally
+("great for layering under a graphic tee"). I'd fix this by weighting matches
+in `style_tags`/`title` higher than matches in free-text `description`, since
+the tags are a more reliable signal of what an item actually is.
+
+I didn't fix it this unit because Milestone 5 only allows one measured
+improvement, and I prioritized the fit card prompt fix since it was tied to
+an actual criterion (4) rather than this — a correctness issue I noticed but
+that none of my current criteria directly test for. That's also worth noting
+as its own gap: my test coverage doesn't currently catch this failure mode at
+all, which I'd want to write a sixth criterion for if I were continuing this
+project further.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 

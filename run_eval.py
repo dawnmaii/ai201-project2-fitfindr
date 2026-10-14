@@ -1,31 +1,7 @@
 #!/usr/bin/env python3
 """
-Run your scenarios repeatedly and write the results down. ← UNIT 4
+Run your scenarios repeatedly and write the results down. 
 
-    python run_eval.py --label before      five tries, the default
-    python run_eval.py --label after       after your improvement
-    python run_eval.py --tries 10          more tries
-
-This does the mechanical half of unit 4 for you. It runs every scenario in
-`scenarios.py` five separate times, **with caching off** so you get five real
-answers, captures the trace and the session for each, and writes it all into
-`results/` in the table format the submission asks for.
-
-Five, because your criteria are written out of five — "4 of 5 tries", "5 of 5
-tries". One column per try means you count the passes and read the verdict
-straight off the row, with no arithmetic in between.
-
-⚠️ What it does NOT do is decide whether a try passed.
-
-That judgment is yours, and it has to be, because it depends on criteria you
-wrote. The Verdict column comes out blank and you fill it in from the output
-underneath. Deciding what counts as a pass is the lesson — a scorer handed to
-you would teach you nothing.
-
-**Two of your three tools call a model, so tries will legitimately differ.**
-That is expected here, unlike pair 1. If all five tries come back identical
-on a criterion that involves the fit card, check that you're really in test
-mode — caching is what usually explains it.
 """
 
 import argparse

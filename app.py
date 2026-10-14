@@ -11,10 +11,6 @@ FitFindr — command line.
 
 Add --trace to any `ask` to print the loop step by step.
 
-⚠️ Quote your query with SINGLE quotes. In PowerShell, "under $30" in double
-quotes silently becomes "under " — PowerShell reads $30 as a variable and
-substitutes nothing, so you search with no price ceiling and get no error
-telling you why. Single quotes are literal in PowerShell, bash and zsh alike.
 """
 
 import argparse

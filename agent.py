@@ -6,11 +6,8 @@ which tool to run next based on what the last one returned.
 
 If your loop calls all three tools no matter what comes back, you have a list
 of function calls. A loop looks at the last result before it picks the next
-step. **That branch is the graded part of this unit.**
+step. 
 
-Build and test your three tools in `tools.py` first. Then come here.
-
-    python agent.py          runs both example paths below
 """
 
 import config
@@ -31,12 +28,6 @@ def new_session(query: str, wardrobe: dict) -> dict:
     The session is the single source of truth for a run. Every tool result goes
     in here, and the next tool reads it back out.
 
-    You could pass values straight from one call to the next. It would work,
-    and you would not be able to test it — you can't print a variable you have
-    already overwritten. Going through the session is what makes the state
-    visible, and unit 4 has you write a criterion about exactly that.
-
-    Add fields if you need them.
     """
     return {
         "query": query,              # what the user typed
@@ -66,14 +57,6 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         The session dict. **Check session["error"] first** — if it isn't None,
         the run ended early and the later fields will still be None.
 
-    ─────────────────────────────────────────────────────────────────────────
-    IN UNIT 4 you come back and add two things:
-
-      • Trace calls. One per step. `trace.step("search_listings", inputs=...,
-        returned=...)` — see trace.py. Your README needs the output.
-
-      • A handler for ModelUnavailable, so a bad key produces a message rather
-        than a stack trace. The import is already at the top of this file.
     """
     # 1. Start a session with new_session().
     session = new_session(query, wardrobe)
