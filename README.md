@@ -153,28 +153,55 @@ Can you ever go wrong with a classic denim and sneaker combo? 👟👖 Rocking t
 
 ## Run Log — Before
 
-<!-- Five criteria, five tries each, in this exact format.
-
-     Five, because your criteria are written out of five. Mark each try PASS
-     or FAIL, count the passes, and read that count against your target — a
-     row targeting 4 of 5 with three PASS cells is MISSED (3/5).
-
-     `python run_eval.py --label before` runs everything and writes the table
-     into results/. Paste it here and fill in the verdicts. -->
-
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 | --------- | ------ | ----- | ----- | ----- | ----- | ----- | ------- |
-| 1.        |        |       |       |       |       |       |         |
-| 2.        |        |       |       |       |       |       |         |
-| 3.        |        |       |       |       |       |       |         |
-| 4.        |        |       |       |       |       |       |         |
-| 5.        |        |       |       |       |       |       |         |
+| 1. Matching query completes all three tools | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before second tool | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Session's `selected_item` matches item in `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card mentions cost + occasion, under 5 sentences | 3 of 5 | PASS | PASS | PASS | PASS | FAIL | MET (4/5)|
+| 5. Price ceiling respected | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Real output from one try**, pasted as text, naming the file and function
 that produced it:
 
-```text
+Produced by `run_eval.py::run_once` → `agent.py::run_agent`.
 
+**Criterion 1** — query: `vintage graphic tee under $30`
+
+```text
+stopped early: no
+selected_item: Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+search_results: 10
+Fit card: Channeling major Y2K energy in this vintage-vibes Graphic Tee — 2003 Tour Bootleg Style (Black), found on Depop for just $24.00! I layered it under an oversized grey crewneck and dark wash baggy straight-leg jeans, finishing the look with edgy black combat boots and a black crossbody bag. It's the ultimate effortless streetwear fit for transitional weather, weekend coffee runs, or just hanging out. 🖤✨
+```
+
+**Criterion 2** — query: `designer ballgown size XXS under $5`
+
+```text
+stopped early: yes — No matches for 'designer ballgown' under $5.0 in size XXS — try raising the price, widening the size, or changing the description.
+selected_item: (none)
+search_results: 0
+```
+
+**Criterion 3** — query: `vintage graphic tee under $30`
+
+```text
+selected_item: Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+[2] suggest_outfit
+      in:  dict with keys: new_item, wardrobe
+      out: Here are three outfit ideas featuring your new **Graphic Tee — 2003 Tour Bootleg Style (Black)**...
+```
+
+**Criterion 4** — query: `denim jacket under $50`
+
+```text
+Fit card: Scored this light wash cropped denim jacket on Poshmark for just $42 and I'm officially obsessed! Here I'm styling it doubled up with a white ribbed tank, dark wash baggy straight-leg jeans, chunky white sneakers, and a black crossbody bag. It's the ultimate effortless fit for weekend errands, grabbing iced coffee with friends, or a casual daytime date. ✨ Denim dreams really do come true! 👖💙
+```
+
+**Criterion 5** — query: `graphic tee under $20`
+
+```text
+out: 3 items: Mesh Long-Sleeve Top — Black ($15.0), Y2K Baby Tee — Butterfly Print ($18.0), Vintage Band Tee — Faded Grey ($19.0)
 ```
 
 ---
