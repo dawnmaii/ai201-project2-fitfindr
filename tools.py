@@ -134,6 +134,6 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     if outfit.strip():
     # 2. Build a prompt with the item details and the outfit.
     # 3. Call generate() and return the response.
-        return generate(f"The user has made an {outfit} featuring {new_item['title']} at {new_item['price']}, found on {new_item['platform']}! Please write an Instagram-like caption for this outfit, mentioning all item details and what the outfit would be good for. Keep it under five sentences.")
+        return generate(f"The user has made an {outfit} featuring {new_item['title']} at {new_item['price']}, found on {new_item['platform']}! Please write an Instagram-like caption for this outfit, mentioning all item details and what the outfit would be good for. Keep it under five sentences. Frame the price of the item as what the whole look would cost, instead of just stating the price alone.")
     else:
         return "You entered an empty outfit, or your outfit consists of only whitespace. Fix this first."

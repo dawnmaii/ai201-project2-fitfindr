@@ -208,22 +208,6 @@ out: 3 items: Mesh Long-Sleeve Top — Black ($15.0), Y2K Baby Tee — Butterfly
 
 ## Verdicts and Diagnoses
 
-<!-- MET or MISSED per criterion against LAST UNIT's target, plus a sentence on
-     how you decided.
-
-     Then, for every miss: which of the four places it happened — a tool, the
-     loop's branch, the session, or the model's output — AND the mechanism.
-
-     Not a diagnosis:  "The fit card was bad."
-     A diagnosis:      "The fit card criterion missed on 2 of 5 items. Both had
-                        an empty brand field. My prompt puts the brand in the
-                        first sentence, so the card opened with a blank and read
-                        like a fragment. The tool worked; the prompt assumed a
-                        field that isn't always there."
-
-     Look for a pattern. Three misses on the same tool is one problem, not
-     three. -->
-
 | # | Criterion                                                | Target | Verdict   | How I decided                                                   |
 |---|----------------------------------------------------------|--------|-----------|-----------------------------------------------------------------|
 | 1 | Matching query completes all three tools                 | 4 of 5 | MET (5/5) | All 5 tries completed search→outfit→fit card with no early stop |
@@ -239,16 +223,6 @@ No misses this round — all 5 criteria met their targets. But criterion 4's tar
 ---
 
 ## Loop Trace
-
-<!-- One full run, printed step by step, with the MCP call visible in it.
-
-     `python app.py ask '...' --trace` once you've added the trace.step()
-     calls in Milestone 2.
-
-     Worth pasting BOTH the happy path and the empty-search path. The empty
-     one should be visibly shorter, because it stops. If your two traces are
-     the same length, your branch isn't working — and this is the fastest way
-     anyone will ever find that out. -->
 
 ### Happy path
 
@@ -319,29 +293,17 @@ python app.py ask 'designer ballgown size XXS under $5' --trace
 
 ## The Improvement
 
-<!-- What you changed, why your diagnosis pointed at it, and the after-run in
-     the same table format. One change, measured properly.
+**What I changed:** Added an explicit instruction to `create_fit_card`'s prompt (`tools.py`): "Frame the price of the item as what the whole look would cost, instead of just stating the price alone."
 
-     `python run_eval.py --label after` -->
-
-**What I changed:**
-
-**Which failure it was meant to fix:**
+**Which failure it was meant to fix:** Criterion 4's original wording required the fit card to mention cost "relative to the outfit," but 0 of 5 "before" tries did this — every fit card just stated the item's standalone price. The prompt never asked for that framing, so the model never produced it.
 
 ### Run Log — After
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
-| --------- | ------ | ----- | ----- | ----- | ----- | ----- | ------- |
-| 1.        |        |       |       |       |       |       |         |
-| 2.        |        |       |       |       |       |       |         |
-| 3.        |        |       |       |       |       |       |         |
-| 4.        |        |       |       |       |       |       |         |
-| 5.        |        |       |       |       |       |       |         |
+| --------------------------------------------------------------------------- | ------ | ----- | ----- | ----- | ----- | ----- | ----------- |
+| 4. Fit card mentions cost relative to outfit + occasion, under 5 sentences | 3 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
-**Did it help, and how do I know:**
-
-<!-- If it made things worse, say that. Honestly reported, that earns full
-     credit and is more interesting than one that worked. -->
+**Did it help, and how do I know:** Yes — before the change, 0 of 5 fit cards framed the price relative to the whole outfit (all 5 just stated the item's price standalone). After adding the explicit instruction, all 5 of 5 tries now frame the price as the cost of the complete look (e.g., "the whole look comes together for just $42.00," "$42 total for the whole look"). This is a direct, measurable fix — the model does exactly what you ask it to when the prompt is explicit, and the fix traced cleanly back to the diagnosis.
 
 ---
 
