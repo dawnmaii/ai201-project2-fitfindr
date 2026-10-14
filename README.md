@@ -158,7 +158,7 @@ Can you ever go wrong with a classic denim and sneaker combo? 👟👖 Rocking t
 | 1. Matching query completes all three tools | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 | 2. Impossible query stops before second tool | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 | 3. Session's `selected_item` matches item in `suggest_outfit` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
-| 4. Fit card mentions cost + occasion, under 5 sentences | 3 of 5 | PASS | PASS | PASS | PASS | FAIL | MET (4/5)|
+| 4. Fit card mentions cost + occasion, under 5 sentences | 3 of 5 | PASS | PASS | PASS | PASS | FAIL | MET (4/5) |
 | 5. Price ceiling respected | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Real output from one try**, pasted as text, naming the file and function
@@ -224,15 +224,17 @@ out: 3 items: Mesh Long-Sleeve Top — Black ($15.0), Y2K Baby Tee — Butterfly
      Look for a pattern. Three misses on the same tool is one problem, not
      three. -->
 
-| # | Criterion | Target | Verdict | How I decided |
-|---|-----------|--------|---------|---------------|
-| 1 |           |        |         |               |
-| 2 |           |        |         |               |
-| 3 |           |        |         |               |
-| 4 |           |        |         |               |
-| 5 |           |        |         |               |
+| # | Criterion                                                | Target | Verdict   | How I decided                                                   |
+|---|----------------------------------------------------------|--------|-----------|-----------------------------------------------------------------|
+| 1 | Matching query completes all three tools                 | 4 of 5 | MET (5/5) | All 5 tries completed search→outfit→fit card with no early stop |
+| 2 | Impossible query stops before second tool                | 5 of 5 | MET (5/5) | All 5 tries stopped at the branch with search_results: 0        |
+| 3 | `selected_item` matches item in `suggest_outfit`         | 5 of 5 | MET (5/5) | Same item title/price carried through all 5 tries' trace        |
+| 4 | Fit card mentions cost + occasion, under 5 sentences     | 3 of 5 | MET (4/5) | 4 of 5 tries mentioned price and occasion under 5 sentences     |
+| 5 | Price ceiling respected                                  | 5 of 5 | MET (5/5) | All 5 tries' returned listings stayed ≤ $20                     |
 
 ### Diagnoses
+
+No misses this round — all 5 criteria met their targets. But criterion 4's target (3/5) didn't get a meaningful test: looking at the actual fit cards, none of the 5 tries mention cost 'relative to the outfit' as the criterion specifically requires — every fit card just states the item's standalone price. The criterion passed on a looser reading than what I originally wrote, which means the 4/5 result doesn't actually confirm the thing I meant to test. See the revision in `criteria.md`.
 
 ---
 

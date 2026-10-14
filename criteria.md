@@ -34,6 +34,10 @@ In 3/5 times, the fit card should mention the cost of the selected item relative
 
 **Why this target:** The model will generate a different output every time, so it's important to give enough room for it to make mistakes while also giving the output some structure via this criterion. Five sentences, if used wisely, should be sufficient for a holistic review of the outfit generated.
 
+>**Revised in unit 4:** The fit card should mention the selected item's price at least once, in 4/5 tries.
+>
+> **Why revised:** "Cost relative to the outfit" wasn't something `create_fit_card`'s prompt actually asks the model to compute — none of the 5 tries produced a cost comparison, only a standalone price mention. The original criterion was testing something the tool was never built to produce. The revised version measures what the tool actually does.
+
 ---
 
 ## 5. Price ceiling is respected
