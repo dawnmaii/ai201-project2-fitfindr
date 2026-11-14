@@ -340,6 +340,24 @@ as its own gap: my test coverage doesn't currently catch this failure mode at
 all, which I'd want to write a sixth criterion for if I were continuing this
 project further.
 
+## Capstone
+
+**What This Extends**
+
+FitFindr, project 2. This unit adds: handling for a failed or hung MCP search, guards around the outfit and fit-card steps, input validation for empty or over-long queries, and a structured run log that records failed runs too. The search, outfit, and fit-card stages and their tools keep their current behavior.
+
+**The Shape**
+
+Shape B: harden against failure. The one piece of work is the bad path: a failed or hung MCP search is caught and reported instead of crashing the request, the outfit and fit-card steps are guarded, and empty or over-long queries are rejected before the agent runs. The run log is required instrumentation for this unit, not part of the shape.
+
+Out of scope:
+
+- Rewriting keyword search, or fixing the title-versus-description relevance bug.
+- Replacing the per-call MCP subprocess with a persistent connection.
+- Adding tools, new data, or a UI.
+
+Size check: about 90 minutes of building, across `agent.py`, `mcp_client.py`, and `serve.py`, plus a small logging module.
+
 <!-- ═════════════════════════════════════════════════════════════════════
 
      SUBMISSION CHECKLIST — unit 4
