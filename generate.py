@@ -37,7 +37,6 @@ from datetime import datetime, timedelta, timezone
 
 import config
 
-_call_times: list[float] = []
 _session_calls = 0
 _cache_hits = 0
 _prompt_tokens = 0
@@ -100,16 +99,40 @@ def clear_cache() -> int:
 # ─── Pacing and guards ───────────────────────────────────────────────────────
 
 
+#
+# What's new (unit 9): the per-minute record is kept in logs/rate_state.json, not
+# in memory. Why: each `python app.py ask` is a new process, and an in-memory list
+# starts empty every time. Ten back-to-back runs once sent 20 requests in 58
+# seconds against a limit of 15 per minute, because no run could see the ones
+# before it. A file is shared by every process on this machine.
+
+RATE_FILE = config.ROOT / "logs" / "rate_state.json"
+
+
+def _recent_calls() -> list:
+    """Wall-clock times of requests made in the last 60 seconds, from any process."""
+    try:
+        stamps = json.loads(RATE_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        stamps = []  # no file yet, or unreadable: nothing recorded
+    now = time.time()
+    return [t for t in stamps if now - t < 60.0]
+
+
 def _wait_for_slot() -> None:
-    """Sleep, if we've used up this minute's allowance."""
-    now = time.monotonic()
-    _call_times[:] = [t for t in _call_times if now - t < 60.0]
+    """
+    Sleep until one more request fits in this minute's allowance, then record it.
 
-    if len(_call_times) < config.REQUESTS_PER_MINUTE:
-        return
-
-    sleep_for = 60.0 - (now - _call_times[0]) + 0.1
-    if sleep_for > 0:
+    Waits in a loop, because another process may have used the slot while this
+    one slept. Records the request's time before returning, so the next caller,
+    in this process or another, sees it.
+    """
+    while True:
+        recent = _recent_calls()
+        if len(recent) < config.REQUESTS_PER_MINUTE:
+            break
+        # recent is in time order, so recent[0] is the oldest request in the window.
+        sleep_for = 60.0 - (time.time() - recent[0]) + 0.1
         # Only worth announcing if it's long enough to notice. Otherwise the
         # message reads "Waiting 0s", which looks like something went wrong.
         if sleep_for >= 1.0:
@@ -119,8 +142,11 @@ def _wait_for_slot() -> None:
                 file=sys.stderr,
                 flush=True,
             )
-        time.sleep(sleep_for)
-        _call_times[:] = [t for t in _call_times if time.monotonic() - t < 60.0]
+        time.sleep(max(sleep_for, 0.1))
+
+    recent.append(time.time())
+    RATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    RATE_FILE.write_text(json.dumps(recent), encoding="utf-8")
 
 
 def _check_budget() -> None:
@@ -355,7 +381,6 @@ def generate(
         _check_daily_budget()
         try:
             client = _get_client()
-            _call_times.append(time.monotonic())
             _session_calls += 1
 
             call_config = {"temperature": temperature}

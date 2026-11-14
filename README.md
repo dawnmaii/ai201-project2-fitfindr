@@ -365,6 +365,67 @@ file is committed as the run record. The record format is described in
 [RUNNING.md](RUNNING.md#where-the-record-of-each-run-goes). Excerpts pasted
 below come from this file, and the measured cost runs are in the same file.
 
+The entries below are lines 68 to 78 of `logs/runs.jsonl`, copied from the clean
+clone at commit `020af8a`. Lines 68 to 77 are the ten cache-off cost runs. Line 78 is
+a deliberate failure: the search timeout was set to 0.001 seconds with
+`AI201_MCP_TIMEOUT`, so the search stage failed and the run was logged as `error`.
+The `stage_ms` field shows only `search`, because the run stopped there.
+
+```json
+{"ts": "2026-11-14T06:44:44.513+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Scored this vintage-vibe Graphic Tee (2003 Tour Bootleg Style in black) on Depop for just $24.0, and honestly, the whole edgy look came together for that exact price! I layered it over a white ribbed tank with baggy dark wash jeans, a cropped zip hoodie, chunky white sneakers, and my go-to black crossbody. It's the ultimate casual, cool fit for running errands around the city or catching an indie gig with friends. 🎸✨", "stage_ms": {"search": 1541.4, "outfit": 2989.9, "fit_card": 909.6}, "duration_ms": 5441.2, "tokens": {"prompt": 521, "output": 430, "total": 951}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:44:50.430+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Stepped out in this Y2K grunge look featuring the ultimate 2003 Tour Bootleg Tee layered over a white ribbed tank and styled with baggy dark wash jeans and chunky boots. Accessorized with my go-to black crossbody bag, this entire fit came together for just $24.00 thanks to a killer find on Depop! It’s the ultimate edgy-casual fit for weekend record shopping, catching a live indie gig, or just grabbing iced coffee with friends. 🎸✨ #Y2KFashion #DepopFinds #StreetwearStyle", "stage_ms": {"search": 1539.6, "outfit": 3126.0, "fit_card": 1352.8}, "duration_ms": 6018.6, "tokens": {"prompt": 702, "output": 626, "total": 1328}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:44:56.925+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Nostalgia is having a moment, and this Y2K Edgy Look featuring our 2003 Tour Bootleg Style tee layered over a white ribbed tank is absolute perfection. Paired with baggy dark-wash jeans, black combat boots, and a matching crossbody bag, this fit is giving effortless vintage energy. You can snag this entire look for just $24.0 on Depop! It's the ultimate go-to outfit for hitting up a concert or hanging out with friends on the weekend.", "stage_ms": {"search": 1566.4, "outfit": 3220.3, "fit_card": 823.8}, "duration_ms": 5610.7, "tokens": {"prompt": 683, "output": 594, "total": 1277}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:45:03.026+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Channeling peak 2003 off-duty energy with this vintage-inspired look featuring our Graphic Tee—2003 Tour Bootleg Style, paired with dark wash baggy jeans, a classic black denim jacket, chunky white sneakers, and a practical crossbody bag. This effortless Y2K streetwear vibe is totally versatile, making it ideal for everything from thrifting on a Saturday afternoon to catching an evening concert. The best part? You can recreate this entire head-turning fit for just $24.00 over on Depop!", "stage_ms": {"search": 1552.3, "outfit": 3563.0, "fit_card": 832.0}, "duration_ms": 5947.6, "tokens": {"prompt": 814, "output": 730, "total": 1544}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:45:09.476+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Channeling peak 90s off-duty energy with this edgy streetwear fit, anchored by a vintage-washed 2003 Tour Bootleg Tee scored on Depop. Layered up with a cropped zip hoodie, baggy dark-wash jeans, and chunky white sneakers, this entire look can be yours for just $24.00! It’s the ultimate effortless ensemble for weekend thrift runs, outdoor concerts, or just grabbing iced coffee with friends. Hit the link in bio to shop the statement piece and recreate the vibe! ✨", "stage_ms": {"search": 1549.5, "outfit": 3327.1, "fit_card": 1316.4}, "duration_ms": 6193.3, "tokens": {"prompt": 627, "output": 544, "total": 1171}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:45:16.175+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Scored this entire 90s streetwear look—featuring the vintage-vibe Graphic Tee (2003 Tour Bootleg Style), dark wash baggy jeans, black denim jacket, chunky white sneakers, and a black crossbody bag—for just $24 total on Depop! It's the ultimate effortless fit for weekend coffee runs, thrift shopping, or hitting up a casual indie concert. Tap the link to shop before someone else snags this steal! 🖤✨", "stage_ms": {"search": 1524.3, "outfit": 3407.4, "fit_card": 1803.8}, "duration_ms": 6735.8, "tokens": {"prompt": 736, "output": 639, "total": 1375}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:45:23.401+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Channeling peak 2000s energy with this effortless Y2K streetwear look featuring our vintage-style black 2003 Tour Bootleg Tee sourced from Depop! Layered with a cropped zip hoodie, baggy dark wash jeans, combat boots, and a crossbody bag, the whole look comes together for just $24.00. It's the ultimate edgy-yet-casual fit for weekend thrift runs, outdoor concerts, or just grabbing iced coffee with friends. Grab the pieces and recreate the vibe! ✨🎸", "stage_ms": {"search": 1596.6, "outfit": 3436.0, "fit_card": 1009.0}, "duration_ms": 6041.9, "tokens": {"prompt": 677, "output": 593, "total": 1270}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:45:29.964+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Living out my Y2K grunge dreams in this effortless tour tee fit, complete with a layered white tank, vintage black denim jacket, baggy dark wash jeans, chunky white sneakers, and a black crossbody bag. The whole look can be yours for just $24.00, thanks to this amazing Depop find of the Graphic Tee — 2003 Tour Bootleg Style in Black. It’s the ultimate vibe for weekend thrift runs, coffee dates, or catching an indie concert. Run, don't walk, to score pieces like this before they're gone!", "stage_ms": {"search": 1531.2, "outfit": 2875.6, "fit_card": 1028.5}, "duration_ms": 5435.5, "tokens": {"prompt": 614, "output": 539, "total": 1153}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:45:35.902+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Channeling major 2003 model-off-duty energy with this layered street look, featuring a vintage-vibe Graphic Tee (2003 Tour Bootleg Style) paired with wide-leg khaki trousers, a brown leather belt, and chunky white sneakers. Layered with an oversized crewneck for those chilly days, it's the ultimate effortless fit for running errands, hitting the record store, or grabbing iced coffee with friends. The best part? You can steal this entire styled look for just $24.0 on Depop! Grab it before it’s gone and tag us in your street style fits.", "stage_ms": {"search": 1550.3, "outfit": 3692.0, "fit_card": 958.1}, "duration_ms": 6200.7, "tokens": {"prompt": 796, "output": 731, "total": 1527}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:45:42.600+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Channeling major early-2000s rock concert energy with this edgy streetwear look, featuring the 2003 Tour Bootleg Style graphic tee in black found on Depop for just $24.00! I paired the tee with baggy dark wash straight-leg jeans, a vintage black denim jacket, and chunky black combat boots, finished with a practical black crossbody bag. You can recreate this entire mood-heavy, double-denim fit for only $24.00 total! It's the ultimate effortless outfit for a weekend gig, exploring the city, or hanging out at local record shops.", "stage_ms": {"search": 1565.9, "outfit": 3055.7, "fit_card": 993.3}, "duration_ms": 5615.1, "tokens": {"prompt": 650, "output": 584, "total": 1234}, "est_cost_usd": null}
+{"ts": "2026-11-14T06:45:48.716+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "error", "error": "The listing search failed: The 'search_listings' search did not answer within 0.001 seconds. The server may be hung or the machine may be overloaded. Try again.", "selected": null, "output": "The listing search failed: The 'search_listings' search did not answer within 0.001 seconds. The server may be hung or the machine may be overloaded. Try again.", "stage_ms": {"search": 639.4}, "duration_ms": 639.5, "tokens": {"prompt": 0, "output": 0, "total": 0}, "est_cost_usd": null}
+```
+
+**What It Costs**
+
+**Measured.** Ten runs of `vintage graphic tee under $30` from the clean clone, with
+`AI201_CACHE=0`, so each run made two real model calls. The numbers come from the
+`tokens` and `duration_ms` fields of lines 68 to 77.
+
+| Measure | Mean | Min | Max |
+|---|---|---|---|
+| Prompt tokens | 682 | 521 | 814 |
+| Output tokens | 601 | 430 | 731 |
+| Total tokens | 1,283 | 951 | 1,544 |
+| Duration (ms) | 5,924 | 5,436 | 6,736 |
+
+**Dollars.** The log's `est_cost_usd` is `null` on these records, because the price
+variables were not set during the runs. The dollar figure is computed from the tokens
+at the published paid-tier price of $0.30 per million input tokens and $2.50 per
+million output tokens. Those prices come from third-party listings, not Google's own
+pricing page: [anotherwrapper.com](https://anotherwrapper.com/llm-pricing/gemini-3.5-flash-lite)
+and [eesel.ai](https://eesel.ai/blog/gemini-3-5-flash-lite-pricing). This key is on the
+free tier, so the actual charge was $0.
+
+**Note on pacing during these runs.** The ten runs were started back to back
+from a shell loop. At that time, each `app.py ask` was a new process, and the
+per-minute pacing kept its record in memory, so it could not see the runs before
+it. Those 20 calls landed within 58 seconds (lines 68 to 77, timestamps
+06:44:44 to 06:45:42 UTC), above the free tier's 15-per-minute limit. The service
+accepted all ten runs and returned no 429 errors, but the dashboard shows the
+over-limit minute. The token counts are unaffected. The pacing now records each
+request in `logs/rate_state.json`, which every process reads, so back-to-back runs
+wait for the window to clear. The cost figures above were measured before that fix.
+
+Per run: 682 × $0.30 / 1M + 601 × $2.50 / 1M = $0.00020 + $0.00150 = **$0.00171**.
+
+**One hundred people a day.** If each person makes one query per day:
+
+- 100 runs × $0.00171 = **$0.17 per day**, about **$5.12 over 30 days** at the paid rate.
+- 100 runs × 1,283 tokens = 128,300 tokens per day.
+- 100 runs × 2 calls = 200 model calls per day, which is within the free tier's 500 per
+  day. Free-tier daily requests, not cost, would be the first limit reached, at about
+  250 runs a day.
+
 <!-- ═════════════════════════════════════════════════════════════════════
 
      SUBMISSION CHECKLIST — unit 4
