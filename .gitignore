@@ -15,6 +15,10 @@ env/
 # Cached model responses
 .cache/
 
+# Daily request counter (unit 9). Local state, not evidence. The run log is
+# logs/runs.jsonl and is deliberately committed.
+logs/daily_usage.json
+
 # OS noise
 .DS_Store
 Thumbs.db

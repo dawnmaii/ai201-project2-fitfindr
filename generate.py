@@ -33,6 +33,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 
 import config
 
@@ -136,6 +137,56 @@ def _check_budget() -> None:
         f"Stop the program and look for the loop. If you really do need more, "
         f"raise the number in config.py — but look first."
     )
+
+
+# ─── Daily allowance (unit 9) ────────────────────────────────────────────────
+# What's new: a daily cap on real requests, kept on disk so it holds across runs.
+# Why: the per-minute pacing and the per-session budget both reset when the
+# program stops. A free key's daily allowance does not reset, so five separate
+# runs would each look fresh while together they used up the day.
+
+DAILY_FILE = config.ROOT / "logs" / "daily_usage.json"
+
+# Gemini's free-tier daily quota resets at midnight Pacific. Windows here has no
+# Pacific time data installed, so UTC-8 is used. In winter that is exact. In
+# summer the counter resets an hour late, which makes it stricter, never looser.
+_RESET_CLOCK = timezone(timedelta(hours=-8))
+
+
+def _today() -> str:
+    return datetime.now(_RESET_CLOCK).date().isoformat()
+
+
+def _check_daily_budget() -> None:
+    """
+    Count one HTTP request against today's allowance, or refuse it.
+
+    Called before every request, including retries, because the service counts
+    each attempt. Failed attempts count too, for the same reason. Cached answers
+    never reach this function, so they cost nothing.
+    """
+    today = _today()
+    state = {"day": today, "count": 0}
+    try:
+        loaded = json.loads(DAILY_FILE.read_text(encoding="utf-8"))
+        if loaded.get("day") == today:  # a count from an earlier day means a fresh day
+            state = loaded
+    except (OSError, ValueError):
+        pass  # no file yet, or it can't be read: start today's count at zero
+
+    if state["count"] >= config.DAILY_REQUEST_LIMIT:
+        raise QuotaGuard(
+            f"Today's allowance of {config.DAILY_REQUEST_LIMIT} requests is used up "
+            f"(config.DAILY_REQUEST_LIMIT). The count resets at midnight Pacific. "
+            f"Try again tomorrow, or raise the limit in config.py only if your key's "
+            f"allowance is actually higher."
+        )
+
+    # The count is saved before the request is sent. If the program dies after
+    # this line, the request still counts, which is the safe direction.
+    state["count"] += 1
+    DAILY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    DAILY_FILE.write_text(json.dumps(state), encoding="utf-8")
 
 
 def usage() -> str:
@@ -298,6 +349,10 @@ def generate(
     last_error: Exception | None = None
     for attempt in range(config.MAX_RETRIES):
         _wait_for_slot()
+        # What's new (unit 9): count this attempt against today's allowance before
+        # sending it. This sits outside the try below, so a refused request raises
+        # QuotaGuard instead of being retried as if it were a rate limit.
+        _check_daily_budget()
         try:
             client = _get_client()
             _call_times.append(time.monotonic())

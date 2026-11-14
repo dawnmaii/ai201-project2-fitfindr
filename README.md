@@ -358,6 +358,13 @@ Out of scope:
 
 Size check: about 90 minutes of building, across `agent.py`, `mcp_client.py`, and `serve.py`, plus a small logging module.
 
+**Instrumentation**
+
+Every run writes one JSON line to [`logs/runs.jsonl`](logs/runs.jsonl). That
+file is committed as the run record. The record format is described in
+[RUNNING.md](RUNNING.md#where-the-record-of-each-run-goes). Excerpts pasted
+below come from this file, and the measured cost runs are in the same file.
+
 <!-- ═════════════════════════════════════════════════════════════════════
 
      SUBMISSION CHECKLIST — unit 4

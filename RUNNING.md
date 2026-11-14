@@ -4,6 +4,99 @@ Everything about how the starter works and how to use it.
 
 ---
 
+## Capstone run path (unit 9) — start here
+
+This is the run path for the capstone extension: the hardened agent, the run
+log, and the HTTP route. It is written to be followed from a fresh clone. The
+sections below it are the course starter guide and are unchanged.
+
+### What you need
+
+| Thing | Requirement |
+|---|---|
+| Python | 3.11, 3.12 or 3.13. Not 3.14. Tested on 3.13.14 (Windows 11) |
+| Packages | Pinned in `requirements.txt`. Installed in step 2 below |
+| API key | A Gemini API key in `.env`, as `GEMINI_API_KEY` |
+| Model files | None. Generation is remote. The only data is `data/listings.json` |
+| Memory | Each search starts one Python process. One request at a time keeps this inside a 512 MB host |
+| Network | Needed for model calls. Searches run locally, so a `no_match` query needs no network |
+
+### Steps (Windows PowerShell)
+
+```powershell
+git clone <REPO-URL> fitfindr
+cd fitfindr
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env          # then paste your key after GEMINI_API_KEY=
+python app.py ask 'vintage graphic tee under $30'
+```
+
+### Steps (macOS / Linux)
+
+```bash
+git clone <REPO-URL> fitfindr
+cd fitfindr
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env            # then paste your key after GEMINI_API_KEY=
+python app.py ask 'vintage graphic tee under $30'
+```
+
+Use single quotes around queries. In PowerShell, double quotes turn `$30` into
+an empty variable and drop the price ceiling without an error.
+
+### Run it as a web service
+
+```powershell
+python serve.py                                   # listens on $PORT, default 5000
+Invoke-RestMethod -Method Get  -Uri http://localhost:5000/health
+Invoke-RestMethod -Method Post -Uri http://localhost:5000/ask `
+  -ContentType 'application/json' `
+  -Body '{"query": "vintage graphic tee under $30"}'
+```
+
+On macOS / Linux, the host command is `gunicorn serve:app`. Gunicorn does not
+run on Windows, so use `python serve.py` there.
+
+Keep the default sync worker. Do not use `-k gevent` or `-k eventlet`. The MCP
+client calls `asyncio.run()`, which fails inside an async worker.
+
+### Where the record of each run goes
+
+Every run appends one JSON line to `logs/runs.jsonl`, including failed, refused
+and rejected runs. Fields: `ts`, `source` (`cli` or `http`), `query`, `status`
+(`ok`, `no_match`, `invalid`, `error`), `error`, `selected`, `output`,
+`stage_ms`, `duration_ms`, `tokens`, `est_cost_usd`.
+
+### Settings (environment variables)
+
+Set these in `.env` or your shell. Each one has a safe default.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `GEMINI_API_KEY` | none | Required |
+| `AI201_CACHE` | `1` | Set to `0` for real model calls on every run (needed for measurements) |
+| `AI201_MCP_TIMEOUT` | `30` | Seconds before a search is abandoned |
+| `AI201_DAILY_LIMIT` | `500` | Model requests per day, counted across runs |
+| `AI201_MODEL` | `gemini-3.5-flash-lite` | Model name |
+| `AI201_PRICE_PROMPT_PER_M` | `0` | Dollars per million prompt tokens. Set to get `est_cost_usd` |
+| `AI201_PRICE_OUTPUT_PER_M` | `0` | Dollars per million output tokens. Set to get `est_cost_usd` |
+
+### Limits to know about
+
+- **Free tier:** 15 requests per minute and 500 per day for the model, per
+  project. Check the rate-limit page in Google AI Studio, because free-tier
+  limits can change. `config.py` has the same numbers.
+- **Daily count:** kept in `logs/daily_usage.json`. Failed attempts and retries
+  count. Cached answers do not. The count resets at midnight Pacific, which the
+  code approximates as UTC-8.
+- **First request after a host sleeps:** around a minute on the free tier.
+
+---
+
 ## Before your first class
 
 Setup happens **before class**. The [environment setup page](../pages/ide_setup)

@@ -90,14 +90,23 @@ MAX_QUERY_CHARS = 300
 # quickly will cross the per-minute limit. The adapter paces you and says when
 # it's waiting; that pause is not a bug.
 #
-# REQUESTS_PER_MINUTE is 15 because that is the actual free-tier limit for
-# gemini-3.5-flash-lite — the API reports it as
-# GenerateRequestsPerMinutePerProjectPerModel-FreeTier, quotaValue 15. Raising
-# it does not buy you more quota; it just means you hit the limit at the
-# service instead of being paced here, and a paced wait is much cheaper than a
-# failed run. Two model calls per agent run means about seven runs a minute.
+# What's new (unit 9): these match the free-tier limits for gemini-3.5-flash-lite
+# as shown in Google AI Studio: 15 requests per minute, 500 per day, per project.
+# Check the rate-limit page in AI Studio again if a run starts failing, since
+# free-tier limits can change.
+#
+# REQUESTS_PER_MINUTE: keep equal to the per-minute limit on that page. If it is
+# higher than the real limit, the pacing stops helping and calls fail with 429.
+#
+# DAILY_REQUEST_LIMIT: keep equal to the per-day limit on that page. Enforced in
+# generate.py across runs, and counted per HTTP attempt, retries included.
+# Override with AI201_DAILY_LIMIT in .env if the limit changes.
+#
+# Two model calls per agent run, so 500 a day is about 250 runs. At 15 a minute
+# the per-minute pacing is the tighter limit.
 
 REQUESTS_PER_MINUTE = 15
+DAILY_REQUEST_LIMIT = int(os.getenv("AI201_DAILY_LIMIT", "500"))
 SESSION_REQUEST_BUDGET = 300
 MAX_RETRIES = 5
 
