@@ -101,16 +101,21 @@ def cmd_examples(args):
 
 
 def _ask_one(query, wardrobe, use_trace):
-    from agent import run_agent
     import trace as trace_module
+    # What's new (unit 9): the CLI goes through the same logged path as the web
+    # route, so a command-line run leaves the same record in logs/runs.jsonl.
+    from runlog import run_logged
 
     if use_trace:
         trace_module.start_trace()
 
-    session = run_agent(query, wardrobe)
+    session, failure = run_logged(query, wardrobe, "cli")
 
     print()
-    if session["error"]:
+    if failure:
+        # The agent raised. Printed instead of raised so the loop in cmd_ask keeps going.
+        print(f"  The run crashed: {failure}")
+    elif session["error"]:
         print(f"  {session['error']}")
     else:
         item = session["selected_item"] or {}

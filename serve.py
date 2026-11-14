@@ -27,10 +27,9 @@ web server has to be. The reason is worth reading before you deploy: see the
 note above `_one_at_a_time` below — it also decides which gunicorn worker you
 can use.
 
-⚠️ There is deliberately NO logging, NO timing and NO request counting in this
-file. That is unit 9's follow-along: you instrument this yourself, first, and
-then deploy it. A structured log you were handed teaches you nothing about
-what belongs in one — and the timing field is the one everybody skips.
+Unit 9 addition: every request now writes one record to logs/runs.jsonl, through
+`runlog.run_logged()`, including refused input and failed runs. Read that file
+for the record format; the fields are described in runlog.py.
 """
 
 import os
@@ -43,8 +42,12 @@ import config  # noqa: F401
 
 from flask import Flask, jsonify, request
 
-from agent import run_agent
 from utils.data_loader import get_example_wardrobe
+# What's new (unit 9): run_logged runs the agent and writes the log record for
+# it, so this route no longer calls run_agent directly. record_rejected logs
+# requests refused before the agent starts. MAX_QUERY_CHARS is the input cap.
+from runlog import run_logged, record_rejected
+from config import MAX_QUERY_CHARS
 
 app = Flask(__name__)
 
@@ -107,12 +110,38 @@ def ask():
                                                 example wardrobe the CLI uses.
     Out:  the session dict from run_agent(), as JSON.
     """
-    payload = request.get_json(silent=True) or {}
-    query = (payload.get("query") or "").strip()
+    # What's new (unit 9): check the shape of the body before reading any field.
+    # Why: the old code called .strip() on whatever "query" held. A number or a
+    # list there raised AttributeError, which Flask turned into an HTML 500 page,
+    # and nothing was logged because the crash happened before run_logged.
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        record_rejected("", "http", "body is not a JSON object")
+        return jsonify({"error": "Send a JSON object with a 'query' field."}), 400
+
+    raw_query = payload.get("query")
+    if raw_query is not None and not isinstance(raw_query, str):
+        reason = f"'query' must be text, not {type(raw_query).__name__}"
+        record_rejected(str(raw_query)[:200], "http", reason)
+        return jsonify({"error": reason + "."}), 400
+
+    query = (raw_query or "").strip()
     if not query:
+        # What's new (unit 9): a refused request is logged too. Without this, a
+        # client sending empty bodies would leave no trace at all.
+        record_rejected(query, "http", "empty query")
         # 400 rather than a stack trace: the caller can act on this one.
         return jsonify({"error": "Send JSON with a 'query' field, e.g. "
                                  '{"query": "vintage graphic tee under $30"}'}), 400
+
+    # What's new (unit 9): reject an over-long query before the agent runs. Why:
+    # the query becomes the search description and part of the model prompt, so
+    # a very long input costs tokens and gives a worse search. Logged as "invalid"
+    # so the rejection is countable.
+    if len(query) > MAX_QUERY_CHARS:
+        reason = f"query is {len(query)} characters; the limit is {MAX_QUERY_CHARS}"
+        record_rejected(query[:200], "http", reason)
+        return jsonify({"error": f"Query too long: {reason}. Shorten it and try again."}), 400
 
     wardrobe = payload.get("wardrobe")
     if not isinstance(wardrobe, dict):
@@ -136,13 +165,12 @@ def ask():
             flush=True,
         )
 
-    failure = None
-    session = None
+    # What's new (unit 9): run_logged writes the record whether the run works or
+    # crashes. It returns (session, failure), and failure is set only when the
+    # agent itself raised. Errors the agent handles (a failed search, say) come
+    # back inside session["error"] as before.
     with _one_at_a_time:
-        try:
-            session = run_agent(query, wardrobe)
-        except Exception as exc:  # noqa: BLE001 — a 500 with a sentence beats a hang
-            failure = f"{type(exc).__name__}: {exc}"
+        session, failure = run_logged(query, wardrobe, "http")
 
     # Outside the lock: building a response is not work the next caller should
     # be waiting on.

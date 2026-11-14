@@ -49,8 +49,24 @@ def call_tool(name: str, arguments: dict):
     Raises:
         MCPError, with something readable in it.
     """
+    # What's new (unit 9): the call has a time limit. asyncio.wait_for cancels
+    # the whole server exchange if it runs past MCP_TIMEOUT_SECONDS, which
+    # stops a hung subprocess from holding the request open indefinitely.
+    # Imported here, not at the top, so importing this module stays cheap.
+    from config import MCP_TIMEOUT_SECONDS
+
     try:
-        return asyncio.run(_call(name, arguments))
+        return asyncio.run(
+            asyncio.wait_for(_call(name, arguments), timeout=MCP_TIMEOUT_SECONDS)
+        )
+    except asyncio.TimeoutError as exc:
+        # Caught before the generic handler below. asyncio.TimeoutError has an
+        # empty message, so the generic handler would print "Couldn't call ...: "
+        # with nothing after the colon, which says nothing useful.
+        raise MCPError(
+            f"The '{name}' search did not answer within {MCP_TIMEOUT_SECONDS:g} seconds. "
+            f"The server may be hung or the machine may be overloaded. Try again."
+        ) from exc
     except MCPError:
         raise
     except Exception as exc:  # noqa: BLE001 — re-raised readably below

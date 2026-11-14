@@ -67,6 +67,21 @@ SEARCH_RESULT_LIMIT = 10
 MODEL = os.getenv("AI201_MODEL", "gemini-3.5-flash-lite")
 
 
+# ─── Failure handling (unit 9) ───────────────────────────────────────────────
+
+# How long one MCP search may take before it is abandoned, in seconds.
+# Why 30: every search starts a fresh Python process and imports the MCP
+# library, which takes a few seconds on a small host. 30 leaves room for that.
+# Why it has a limit at all: without one, a hung subprocess holds the
+# single-request lock in serve.py forever and every later request queues behind it.
+MCP_TIMEOUT_SECONDS = float(os.getenv("AI201_MCP_TIMEOUT", "30"))
+
+# The longest query accepted, in characters. Why 300: the longest example query
+# is about 60 characters, so this leaves plenty of room for real searches. It
+# stops a pasted essay from being sent to the model as a search description.
+MAX_QUERY_CHARS = 300
+
+
 # ─── Rate limiting and quota guards ──────────────────────────────────────────
 # You should not need to touch these.
 #

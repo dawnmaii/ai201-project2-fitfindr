@@ -12,9 +12,64 @@ can't tell which layer is lying to you.
 
 """
 
+import re
+
 import config  # noqa: F401 — you'll use this in search_listings
 from generate import generate
 from utils.data_loader import load_listings
+
+
+# ── size matching (unit 9) ────────────────────────────────────────────────────
+# What's new: sizes are compared as sets of parts, not as raw strings. Why: the
+# listings write the same size several ways ("S/M", "S\\M", "One Size / Oversized",
+# "XL (oversized)"), and a user types it another way again ("xs/s", "size XS").
+# Comparing raw strings made "XL (oversized)" unmatchable by "XL".
+
+def _split_label(part: str) -> list:
+    """
+    Split a multi-part label such as "W30 L30" into "w30" and "l30".
+
+    Only split when every token is a letter-then-number code (W30, L30). That
+    rule leaves "US 8" and "One Size" whole: "us" has no number, so the label
+    is a single size, not two parts.
+    """
+    tokens = part.split()  # the words inside one part, e.g. ["w30", "l30"]
+    # Split only when there are several words AND each is a letter-then-number
+    # code. "US 8" has the word "us", which has no number, so it is kept whole.
+    if len(tokens) > 1 and all(re.fullmatch(r"[a-z]+\d+(?:\.\d+)?", t) for t in tokens):
+        return tokens
+    return [part]  # anything else is one size label, returned unchanged
+
+
+def normalize_size(value: str) -> frozenset:
+    """
+    Reduce a size string to its set of lowercase parts.
+
+    "S\\XS"                  -> {"s", "xs"}
+    "XL (oversized)"         -> {"xl"}        notes in brackets are dropped
+    "One Size / Oversized"   -> {"one size", "oversized"}
+    "US 8.5"                 -> {"us 8.5"}    a region prefix stays with its number
+    "W30 L30"                -> {"w30", "l30"} waist and length are separate parts
+    """
+    text = re.sub(r"\([^)]*\)", " ", value.lower())   # drop "(oversized)"-style notes
+    parts = re.split(r"[/\\]", text)                    # "/" and "\" are the same separator
+    cleaned = {re.sub(r"\s+", " ", part).strip() for part in parts}
+    # Drop empty pieces (a stray "/" leaves one), then split each label that is
+    # really several waist/length codes. Everything else stays as one part.
+    split = {sub for part in cleaned if part for sub in _split_label(part)}
+    return frozenset(sub for sub in split if sub)
+
+
+def size_matches(wanted: str, listed: str) -> bool:
+    """
+    True when every part the user asked for is one of the listing's parts.
+
+    "M" matches "S/M" (it's one of the parts). "XS/S" matches "S\\XS" (same
+    parts, either order). "XS/S" does NOT match "S" (the listing lacks XS).
+    Both sides are normalized, so case and separator style don't matter.
+    """
+    wanted_parts = normalize_size(wanted)
+    return bool(wanted_parts) and wanted_parts <= normalize_size(listed)
 
 
 # ── Tool 1: search_listings ───────────────────────────────────────────────────
@@ -59,7 +114,9 @@ def search_listings(
     # 1. Load every listing with load_listings().
     listings = load_listings()
     # 2. Filter by max_price and by size, when each is provided.
-    filtered_list = [item for item in listings if (max_price is None or item['price'] <= max_price) and (size is None or size.lower() in item['size'].lower().split('/'))]
+    # What's new (unit 9): size is matched by size_matches(), which is case-
+    # insensitive and treats "/" and "\" alike. See normalize_size above.
+    filtered_list = [item for item in listings if (max_price is None or item['price'] <= max_price) and (size is None or size_matches(size, item['size']))]
     # 3. Score what's left by keyword overlap with `description`.
     scored_items = []
     normal_description = description.lower().split()
