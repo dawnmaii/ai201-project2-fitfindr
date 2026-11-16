@@ -342,10 +342,12 @@ project further.
 
 ## Capstone
 
+<!-- markdownlint-disable-next-line MD036 -->
 **What This Extends**
 
 FitFindr, project 2. This unit adds: handling for a failed or hung MCP search, guards around the outfit and fit-card steps, input validation for empty or over-long queries, and a structured run log that records failed runs too. The search, outfit, and fit-card stages and their tools keep their current behavior.
 
+<!-- markdownlint-disable-next-line MD036 -->
 **The Shape**
 
 Shape B: harden against failure. The one piece of work is the bad path: a failed or hung MCP search is caught and reported instead of crashing the request, the outfit and fit-card steps are guarded, and empty or over-long queries are rejected before the agent runs. The run log is required instrumentation for this unit, not part of the shape.
@@ -358,6 +360,7 @@ Out of scope:
 
 Size check: about 90 minutes of building, across `agent.py`, `mcp_client.py`, and `serve.py`, plus a small logging module.
 
+<!-- markdownlint-disable-next-line MD036 -->
 **Instrumentation**
 
 Every run writes one JSON line to [`logs/runs.jsonl`](logs/runs.jsonl). That
@@ -385,6 +388,7 @@ The `stage_ms` field shows only `search`, because the run stopped there.
 {"ts": "2026-11-14T06:45:48.716+00:00", "source": "cli", "query": "vintage graphic tee under $30", "status": "error", "error": "The listing search failed: The 'search_listings' search did not answer within 0.001 seconds. The server may be hung or the machine may be overloaded. Try again.", "selected": null, "output": "The listing search failed: The 'search_listings' search did not answer within 0.001 seconds. The server may be hung or the machine may be overloaded. Try again.", "stage_ms": {"search": 639.4}, "duration_ms": 639.5, "tokens": {"prompt": 0, "output": 0, "total": 0}, "est_cost_usd": null}
 ```
 
+<!-- markdownlint-disable-next-line MD036 -->
 **What It Costs**
 
 **Measured.** Ten runs of `vintage graphic tee under $30` from the clean clone, with
@@ -392,7 +396,7 @@ The `stage_ms` field shows only `search`, because the run stopped there.
 `tokens` and `duration_ms` fields of lines 68 to 77.
 
 | Measure | Mean | Min | Max |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Prompt tokens | 682 | 521 | 814 |
 | Output tokens | 601 | 430 | 731 |
 | Total tokens | 1,283 | 951 | 1,544 |
@@ -426,24 +430,88 @@ Per run: 682 × $0.30 / 1M + 601 × $2.50 / 1M = $0.00020 + $0.00150 = **$0.0017
   day. Free-tier daily requests, not cost, would be the first limit reached, at about
   250 runs a day.
 
-<!-- ═════════════════════════════════════════════════════════════════════
+<!-- markdownlint-disable-next-line MD036 -->
+**Run Log and Verdicts**
 
-     SUBMISSION CHECKLIST — unit 4
+Three trials per criterion, following the test procedure in `criteria.md`. Model calls were made with `AI201_CACHE=0`. Verdicts are against the targets as written.
 
-       [ ] mcp_server.py exists with one tool registered
-           (or a written record of exactly where the rewire broke)
-       [ ] Run Log — Before, five criteria, five tries each
-       [ ] Real output pasted underneath, naming file and function
-       [ ] A verdict on every criterion
-       [ ] A diagnosis for every miss, naming a place AND a mechanism
-       [ ] Loop Trace, with the MCP call visible in it
-       [ ] All three failure modes triggered and handled
-       [ ] One improvement, with Run Log — After in the same format
-       [ ] What's Still Broken
-       [ ] At least four new commits
-       [ ] The SAME repository URL as last unit
+| Criterion | Target | Trial 1 | Trial 2 | Trial 3 | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| 1. Forced failures reported and logged | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Rejected inputs explained and logged | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. One complete run log record per request | 20 of 20 | 20/20 | 20/20 | 20/20 | MET |
+| 4. Decimal prices and sizes match precisely | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Requests paced to stay under 15 per minute | never above 15 | peak 14 | peak 14 | peak 15 | MET |
 
-     ═════════════════════════════════════════════════════════════════════ -->
+**Output, criterion 1** (`serve.py::ask` through the Flask test client, `run_logged` writes the record). Forced timeout: `config.MCP_TIMEOUT_SECONDS = 0.001`. One trial's sample:
+
+```text
+trial 1 sample: HTTP 200 error="The listing search failed: The 'search_listings' search did not answer within 0.001 seconds. The server may be"
+trial 1 sample log: status=error stage_ms={'search': 2165.9}
+TRIAL 1: 5/5
+TRIAL 2: 5/5
+TRIAL 3: 5/5
+```
+
+**Output, criterion 2** (`serve.py::ask`, trial 1 shown). Each message names its problem:
+
+```text
+[size with no value] HTTP 200 status=invalid log=invalid
+    message: 'size' needs a size after it, e.g. 'size M', 'size XS/S' or 'size 8'.
+[price with no value] HTTP 200 status=invalid log=invalid
+    message: 'price' needs a number after it, e.g. 'price $30' or 'under $30'.
+[empty query] HTTP 400 status=None log=invalid
+    message: Your query is empty. Send JSON with a non-empty 'query' field, e.g. {"query": "vintage graphic tee under $30"}.
+[over-long query] HTTP 400 status=None log=invalid
+    message: Query too long: query is 301 characters; the limit is 300. Shorten it and try again.
+[non-text query] HTTP 400 status=None log=invalid
+    message: 'query' must be text, not int.
+TRIAL 1: 5/5
+TRIAL 2: 5/5
+TRIAL 3: 5/5
+```
+
+**Output, criterion 3** (`logs/runs.jsonl`, first of the 60 criterion 3 records, written by `runlog.run_logged`). Each trial was 6 successful, 4 forced failures, 5 rejected, and 5 no-match requests. All 60 records were checked against the field rules: 20 of 20 in every trial.
+
+```json
+{"ts": "2026-11-16T01:52:59.862+00:00", "source": "http", "query": "vintage graphic tee under $30", "status": "ok", "error": null, "selected": "Graphic Tee — 2003 Tour Bootleg Style", "output": "Channeling effortless 90s grunge and Y2K streetwear with this graphic tee — 2003 tour bootleg style in black, paired with baggy dark wash jeans, black combat boots, a brown leather belt, and a black crossbody bag. This edgy, monochrome fit is completed with a vintage black denim jacket layered over top. Whether you're heading to a casual weekend hangout, hitting up a vintage market, or going to a concert, this entire look can be yours for just $24.00! 🎸🖤✨", "stage_ms": {"search": 2634.5, "outfit": 6580.9, "fit_card": 1219.1}, "duration_ms": 10435.2, "tokens": {"prompt": 764, "output": 681, "total": 1445}, "est_cost_usd": null}
+```
+
+**Output, criterion 4** (`runlog.run_logged` → `agent.run_agent`; the selected listing is checked against each query's constraints):
+
+```text
+trial 1 | 'tee under $30.50'                   | PASS | Y2K Baby Tee — Butterfly Print     | size=S/M price=18.0 | ok | error=None
+trial 1 | 'tee size S/M'                       | PASS | Y2K Baby Tee — Butterfly Print     | size=S/M price=18.0 | ok | error=None
+trial 1 | 'jeans size W30 L30 under $38.50'    | PASS | Vintage Levi's 501 Jeans — Medium  | size=W30 L30 price=38.0 | ok | error=None
+trial 1 | 'jeans size W30 L30'                 | PASS | Vintage Levi's 501 Jeans — Medium  | size=W30 L30 price=38.0 | ok | error=None
+trial 1 | 'boots size US 8.5 under $44.50'     | PASS | Suede Chelsea Boots — Tan          | size=US 8.5 price=44.0 | ok | error=None
+TRIAL 1: 5/5
+trial 2 | 'tee under $30.50'                   | PASS | Y2K Baby Tee — Butterfly Print     | size=S/M price=18.0 | ok | error=None
+trial 2 | 'tee size S/M'                       | PASS | Y2K Baby Tee — Butterfly Print     | size=S/M price=18.0 | ok | error=None
+trial 2 | 'jeans size W30 L30 under $38.50'    | PASS | Vintage Levi's 501 Jeans — Medium  | size=W30 L30 price=38.0 | ok | error=None
+trial 2 | 'jeans size W30 L30'                 | PASS | Vintage Levi's 501 Jeans — Medium  | size=W30 L30 price=38.0 | ok | error=None
+trial 2 | 'boots size US 8.5 under $44.50'     | PASS | Suede Chelsea Boots — Tan          | size=US 8.5 price=44.0 | ok | error=None
+TRIAL 2: 5/5
+trial 3 | 'tee under $30.50'                   | PASS | Y2K Baby Tee — Butterfly Print     | size=S/M price=18.0 | ok | error=None
+trial 3 | 'tee size S/M'                       | PASS | Y2K Baby Tee — Butterfly Print     | size=S/M price=18.0 | ok | error=None
+trial 3 | 'jeans size W30 L30 under $38.50'    | PASS | Vintage Levi's 501 Jeans — Medium  | size=W30 L30 price=38.0 | ok | error=None
+trial 3 | 'jeans size W30 L30'                 | PASS | Vintage Levi's 501 Jeans — Medium  | size=W30 L30 price=38.0 | ok | error=None
+trial 3 | 'boots size US 8.5 under $44.50'     | PASS | Suede Chelsea Boots — Tan          | size=US 8.5 price=44.0 | ok | error=None
+TRIAL 3: 5/5
+```
+
+**Output, criterion 5** (`generate.py::_wait_for_slot` writes `logs/request_times.jsonl`; the peak is counted over each 60-second window, using the peak script in the scratchpad):
+
+```text
+== TRIAL 1: started 01:57:45 UTC
+requests: 21  span: 145.4s  peak in any 60s window: 14  -> PASS
+== TRIAL 2: started 02:00:31 UTC
+requests: 20  span: 82.7s  peak in any 60s window: 14  -> PASS
+== TRIAL 3: started 02:01:59 UTC
+requests: 20  span: 80.7s  peak in any 60s window: 15  -> PASS
+```
+
+Trial 1 logged 21 requests in ten runs, where ten runs make 20 calls. One run made an extra call. The request-time log doesn't say which run, so I haven't identified it. Trial 1's peak of 14 still passes.
 
 ---
 
