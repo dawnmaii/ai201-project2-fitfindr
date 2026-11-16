@@ -513,6 +513,49 @@ requests: 20  span: 80.7s  peak in any 60s window: 15  -> PASS
 
 Trial 1 logged 21 requests in ten runs, where ten runs make 20 calls. One run made an extra call. The request-time log doesn't say which run, so I haven't identified it. Trial 1's peak of 14 still passes.
 
+<!-- markdownlint-disable-next-line MD036 -->
+**Before and after, criterion 5**
+
+The before run is the re-run at pacer 15, using the same procedure as M5. The
+after run is at pacer 13. Each trial deleted `logs/request_times.jsonl` first, so the
+request log in the repo holds only the last trial of the most recent run.
+
+| Trial | Before (pacer 15), peak | After (pacer 13), peak |
+| --- | --- | --- |
+| 1 | 15 | 13 |
+| 2 | 15 | 13 |
+| 3 | 15 | 13 |
+
+**Verdict, before (pacer 15), against the target of 13:** MISSED. Each trial exceeded (peaks of 15).
+
+**Verdict, after (pacer 13), against the target of 13:** MET. Each trial stays at or below 13.
+
+**Output, before run** (`logs/request_times.jsonl`, peak counted over each 60-second window):
+
+```text
+== TRIAL 1: started 02:24:56 UTC
+requests: 20  span: 72.6s  peak in any 60s window: 15  -> PASS
+== TRIAL 2: started 02:26:12 UTC
+requests: 20  span: 73.7s  peak in any 60s window: 15  -> PASS
+== TRIAL 3: started 02:27:30 UTC
+requests: 20  span: 72.9s  peak in any 60s window: 15  -> PASS
+```
+
+**Output, after run:**
+
+```text
+== TRIAL 1: started 02:09:05 UTC
+requests: 20  span: 86.2s  peak in any 60s window: 13  -> PASS
+== TRIAL 2: started 02:10:37 UTC
+requests: 20  span: 88.9s  peak in any 60s window: 13  -> PASS
+== TRIAL 3: started 02:12:11 UTC
+requests: 20  span: 97.2s  peak in any 60s window: 13  -> PASS
+```
+
+**Diagnosis:** The pacing check in `generate.py` was what determined whether a request went out. The check allows a request while fewer than `REQUESTS_PER_MINUTE` requests fall in the last 60 seconds. At 15, the pacer lets a window fill to exactly 15, so the peak can reach 15. The before run peaked at 15 in all three trials, and the after run at 13. The change was only the constant, so the constant is what moved the peak.
+
+**The Improvement:** Changing the pacer from 15 to 13 did improve progress towards meeting criterion 5. The peaks moved from 15 to 13 as a result. The target was met.
+
 ---
 
 📖 **How to run this project: [RUNNING.md](RUNNING.md)**
