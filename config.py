@@ -95,8 +95,11 @@ MAX_QUERY_CHARS = 300
 # Check the rate-limit page in AI Studio again if a run starts failing, since
 # free-tier limits can change.
 #
-# REQUESTS_PER_MINUTE: keep equal to the per-minute limit on that page. If it is
-# higher than the real limit, the pacing stops helping and calls fail with 429.
+# REQUESTS_PER_MINUTE: set below the per-minute limit on that page, to leave a
+# margin. Unit 9 M6 before run: 15 (the real limit, no margin). The after run
+# used 13. At 15 one trial peaked at exactly 15, the limit itself. At 13 the peaks
+# were 13, which leaves two requests of headroom. If it is set above the real
+# limit, calls fail with 429.
 #
 # DAILY_REQUEST_LIMIT: keep equal to the per-day limit on that page. Enforced in
 # generate.py across runs, and counted per HTTP attempt, retries included.
@@ -105,7 +108,7 @@ MAX_QUERY_CHARS = 300
 # Two model calls per agent run, so 500 a day is about 250 runs. At 15 a minute
 # the per-minute pacing is the tighter limit.
 
-REQUESTS_PER_MINUTE = 15
+REQUESTS_PER_MINUTE = 13
 DAILY_REQUEST_LIMIT = int(os.getenv("AI201_DAILY_LIMIT", "500"))
 SESSION_REQUEST_BUDGET = 300
 MAX_RETRIES = 5
