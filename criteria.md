@@ -50,7 +50,7 @@ Each criterion gives a target, a test procedure, and the reason for the target. 
 **Target:** 5 of 5 queries return a listing that meets every constraint in the query. The constraints are:
 
 - **Price:** the listing's price is at or below the price cap in the query. Listing prices in `data/listings.json` are whole dollars, so a cap such as `under $30.50` should return any listing priced $30.00 or less.
-- **Size:** the listing's size must include every part of the requested size, after case and slash normalization (`s/m` and `S/M` are the same). A request for `size S` is satisfied by an `S/M` listing, because that listing includes S. A request for `size S/M` is not satisfied by an `S` listing, because it lacks M. This is the rule `size_matches` in `tools.py` implements. Each size in a query must follow the word `size`, because a size without it is not parsed. For example, `pants W30 L30` returned W28 and W29 pants.
+- **Size:** the listing's size equals the size the query names, after case and separator normalization. `s/m` and `S/M` are the same size. A listing that only contains the requested size is a failure: an `S/M` listing returned for `size S` counts as a failure, and so does an `S` listing returned for `size S/M`. Each size in a query must follow the word `size`, because a size without it is not parsed. For example, `pants W30 L30` returned W28 and W29 pants.
 
 Inaccurate matches and empty results both count as failures.
 
@@ -70,11 +70,15 @@ Do not use a size that is not in the data, such as `W30 L40` or `UK 7.5`. A corr
 
 **Target:** Across 10 back-to-back runs, the number of requests in any 60-second window never exceeds 15. This is a hard API limit, so a single violation fails the criterion.
 
+>Revised in unit 9 (M6): Target: 13 requests in any 60-second window.
+>Test step 3 changed to: 13.
+>Why this number: If the 15-RPM limit is reached at any point in time, there is no margin for error anywhere. The "before" run at pacer = 15 peaked at 15 in all three trials, and the after run peaked at 13. With 13, we have two requests of headroom. One request of headroom only allows for one risk, such as retry is the same window.
+
 **How to test:**
 
 1. Set `AI201_CACHE=0` for the whole test. With the cache on, a repeated query returns a saved answer without a model call, so the test could pass without any request being paced.
 2. Run `app.py ask` 10 times back to back with queries that each make model calls.
-3. Delete `logs/request_times.jsonl` before the test, so it holds only this test's requests. `generate.py` appends one line, `{"t": <unix time>}`, for each request it sends. Unlike `logs/rate_state.json`, which keeps only the last 60 seconds, this file is never pruned. After the 10 runs, find the peak: for each timestamp, count the timestamps from it up to 60 seconds later. Count across the whole file, not run by run, because a 60-second window can span two runs. The highest count must be 15 or less.
+3. Delete `logs/request_times.jsonl` before the test, so it holds only this test's requests. `generate.py` appends one line, `{"t": <unix time>}`, for each request it sends. Unlike `logs/rate_state.json`, which keeps only the last 60 seconds, this file is never pruned. After the 10 runs, find the peak: for each timestamp, count the timestamps from it up to 60 seconds later. Count across the whole file, not run by run, because a 60-second window can span two runs. The highest count must be 13 or less.
 4. As an outside check, compare the total request count with the requests shown on the Google AI Studio usage page for the same period. The log is written by the same code that paces requests, so it cannot show a request that code never recorded.
 
 **Why this target:** Users may submit several requests in a row. The MCP uses Gemini's free-tier API, which rate-limits quickly when requests are not paced. Pacing keeps the application responsive without long waits or sudden rejections.
