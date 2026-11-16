@@ -135,7 +135,7 @@ Can you ever go wrong with a classic denim and sneaker combo? 👟👖 Rocking t
 
 ---
 
-## How I Used AI
+## Unit 4 — How I Used AI
 
 ### Moment 1
 
@@ -303,7 +303,7 @@ python app.py ask 'designer ballgown size XXS under $5' --trace
 
 ---
 
-## The Improvement
+## Unit 4 — The Improvement
 
 **What I changed:** Added an explicit instruction to `create_fit_card`'s prompt (`tools.py`): "Frame the price of the item as what the whole look would cost, instead of just stating the price alone."
 
@@ -319,7 +319,7 @@ python app.py ask 'designer ballgown size XXS under $5' --trace
 
 ---
 
-## What's Still Broken
+## Unit 4 — What's Still Broken
 
 No criterion was missed this unit, but one real weakness surfaced repeatedly
 in the eval data that none of my five criteria happen to test for:
@@ -359,6 +359,14 @@ Out of scope:
 - Adding tools, new data, or a UI.
 
 Size check: about 90 minutes of building, across `agent.py`, `mcp_client.py`, and `serve.py`, plus a small logging module.
+
+<!-- markdownlint-disable-next-line MD036 -->
+**Running It**
+
+The run path is in [RUNNING.md](RUNNING.md#capstone-run-path-unit-9--start-here).
+From a fresh clone, `python app.py ask 'vintage graphic tee under $30'` runs the
+agent once from the command line, and `python serve.py` starts the web route on
+`$PORT` (default 5000).
 
 <!-- markdownlint-disable-next-line MD036 -->
 **Instrumentation**
@@ -554,7 +562,46 @@ requests: 20  span: 97.2s  peak in any 60s window: 13  -> PASS
 
 **Diagnosis:** The pacing check in `generate.py` was what determined whether a request went out. The check allows a request while fewer than `REQUESTS_PER_MINUTE` requests fall in the last 60 seconds. At 15, the pacer lets a window fill to exactly 15, so the peak can reach 15. The before run peaked at 15 in all three trials, and the after run at 13. The change was only the constant, so the constant is what moved the peak.
 
+<!-- markdownlint-disable-next-line MD036 -->
 **The Improvement:** Changing the pacer from 15 to 13 did improve progress towards meeting criterion 5. The peaks moved from 15 to 13 as a result. The target was met.
+
+<!-- markdownlint-disable-next-line MD036 -->
+**What's Still Broken:**
+
+1. **Search relevance.** Keyword overlap counts matches in the title, the description, and the tags the same way. "vintage graphic tee under $30" ranks Mesh Long-Sleeve Top fourth, because its description mentions "graphic tee". The fix would be to score matches in the title and tags above matches in the description. This is on the Out of scope list above, so I did not change it.
+
+2. **Search latency.** Every search starts a new MCP server process. Across the last 60 runs, the search stage had a median of 2.0 seconds, with a range of 1.5 to 4.0 seconds. The fix would be to keep one MCP connection open and send every search over it. This is the persistent connection on the Out of scope list above.
+
+3. **No timeout on model calls.** Only the MCP search has a time limit. A hung Gemini call has no limit, so in the web route it would hold the single-request lock in `serve.py` until it returned. The fix is to put a timeout on each Gemini call, the same way `AI201_MCP_TIMEOUT` limits the search, and to log a timed-out call as `error`.
+
+4. **No lock on the pacer and daily counter.** `_wait_for_slot` in `generate.py` reads `logs/rate_state.json`, checks for a free slot, then writes the file back. The daily counter in `logs/daily_usage.json` works the same way. Nothing holds the file between the read and the write, so two CLI runs started together can read the same count and both go through. Threads or async code would not fix this, because separate `python app.py ask` processes do not share memory. The fix is a file lock held across each read-check-write.
+
+5. **Size matching is strict on the US prefix.** `8.5` doesn't match a listing labeled `US 8.5`, and the matching rules don't treat the two as the same size. The fix would be to strip the `US` prefix when matching. I would keep the prefix strict instead. Without a region, `8.5` could match a size from another region as easily as a US one, so a query could return the wrong shoe. Queries have to name the region, as in `US 8.5`, which matches the current matcher.
+
+6. **A price with no dollar sign is accepted.** "under 30" sets a price cap of 30, the same as "under $30". This is intended, so it needs no fix. The regex in `agent.py` accepts a bare number after "under", "below", or "price", because those words already mark a price in a shopping query. A bare number with no price word is not read as a price, so "2003 Tour Bootleg" does not set a cap. Requiring the $ would reject "under 30", which is a natural way to type a price cap.
+
+7. **The run log has no size limit.** `logs/runs.jsonl` only grows. The fix would be to rotate the log once it passes a set size: move the current file to a numbered backup and start a new one. The committed record would then be split across files.
+
+I stopped for time, not scope. Items 3 and 4 are failure handling, which Shape B covers, so they are in scope. Items 1 and 2 are on the Out of scope list above. Item 5 is a matching design choice, and item 6 is intended. I did not reach item 7.
+
+The first change I'd make is the timeout on the Gemini call (item 3). A hung call holds the single-request lock in `serve.py`, so every request behind it waits with no limit. The timeout turns that into a logged `error`. The file lock (item 4) comes second, because it only matters when two CLI runs overlap, and no test covers that today.
+
+<!-- markdownlint-disable-next-line MD036 -->
+**How I Used AI**
+
+<!-- markdownlint-disable-next-line MD036 -->
+**Moment 1: the rate-limit burst**
+
+- *What I asked for:* I reported that the RPM reached 18/15 during one of the test runs.
+- *What came back:* The log showed 20 model calls within 58 seconds, from the ten back-to-back cost runs. The cause was that the pacing record lived in memory, and each app.py ask started with an empty one.
+- *What I changed:* The change was moving the per-minute record into logs/rate_state.json, which every process shares, and testing it with a fake clock.
+
+<!-- markdownlint-disable-next-line MD036 -->
+**Moment 2: the edge-case probe**
+
+- *What I asked for:* I asked whether any input edge cases had been missed.
+- *What came back:* The probe found that a non-text query crashed the route with an unlogged HTML 500. It also found that "US 8" was cut to "US" with the "8" left in the search text.
+- *What I changed:* The changes were a type check in serve.py and a rewrite of the size pattern in `agent.py`.
 
 ---
 
