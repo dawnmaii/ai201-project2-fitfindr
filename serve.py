@@ -131,8 +131,8 @@ def ask():
         # client sending empty bodies would leave no trace at all.
         record_rejected(query, "http", "empty query")
         # 400 rather than a stack trace: the caller can act on this one.
-        return jsonify({"error": "Send JSON with a 'query' field, e.g. "
-                                 '{"query": "vintage graphic tee under $30"}'}), 400
+        return jsonify({"error": "Your query is empty. Send JSON with a non-empty 'query' "
+                                 'field, e.g. {"query": "vintage graphic tee under $30"}.'}), 400
 
     # What's new (unit 9): reject an over-long query before the agent runs. Why:
     # the query becomes the search description and part of the model prompt, so

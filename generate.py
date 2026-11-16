@@ -107,6 +107,7 @@ def clear_cache() -> int:
 # before it. A file is shared by every process on this machine.
 
 RATE_FILE = config.ROOT / "logs" / "rate_state.json"
+REQUEST_LOG = config.ROOT / "logs" / "request_times.jsonl"
 
 
 def _recent_calls() -> list:
@@ -144,9 +145,18 @@ def _wait_for_slot() -> None:
             )
         time.sleep(max(sleep_for, 0.1))
 
-    recent.append(time.time())
+    now = time.time()
+    recent.append(now)
     RATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     RATE_FILE.write_text(json.dumps(recent), encoding="utf-8")
+    # Append-only copy of every request time. RATE_FILE is pruned to the last 60
+    # seconds on each write, so it cannot show an earlier peak. The pacing test
+    # reads this file instead.
+    try:
+        with open(REQUEST_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"t": now}) + "\n")
+    except OSError:
+        pass  # logging the request must never block the request itself
 
 
 def _check_budget() -> None:
